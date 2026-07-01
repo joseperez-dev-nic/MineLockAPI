@@ -25,15 +25,15 @@ namespace MineLock.Api.Repositories
         /// y se propaga en el mensaje de la excepción para que el consumidor
         /// (Candados, o quien pruebe la API) sepa exactamente qué regla falló.
         /// </summary>
-        public async Task<SessionOpenResult?> OpenSessionAsync(string employeeCode, string levelCode, DateTime? entryTime)
+        public async Task<SessionOpenResult?> OpenSessionAsync(long personId, int levelId, DateTime? entryTime)
         {
             try
             {
                 using var cnn = _factory.CreateConnection();
                 using var cmd = new MySqlCommand("sp_session_open", cnn);
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("p_employee_code", employeeCode);
-                cmd.Parameters.AddWithValue("p_level_code", levelCode);
+                cmd.Parameters.AddWithValue("p_person_id", personId);
+                cmd.Parameters.AddWithValue("p_level_id", levelId);
                 cmd.Parameters.AddWithValue("p_entry_time", entryTime ?? DateTime.Now);
 
                 await cnn.OpenAsync();
@@ -56,7 +56,7 @@ namespace MineLock.Api.Repositories
             }
             catch (MySqlException ex)
             {
-                throw new DataAccessException((int)ex.Number, $"Error al registrar la entrada: {ex.Message}", ex);
+                throw new DataAccessException((int)ex.Number, $"{ex.Message}", ex);
             }
         }
 
@@ -64,14 +64,14 @@ namespace MineLock.Api.Repositories
         /// sp_session_close(p_employee_code, p_exit_time).
         /// Señaliza PERSON_NOT_FOUND o NOT_INSIDE si la coherencia falla.
         /// </summary>
-        public async Task<SessionCloseResult?> CloseSessionAsync(string employeeCode, DateTime? exitTime)
+        public async Task<SessionCloseResult?> CloseSessionAsync(long personId, DateTime? exitTime)
         {
             try
             {
                 using var cnn = _factory.CreateConnection();
                 using var cmd = new MySqlCommand("sp_session_close", cnn);
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("p_employee_code", employeeCode);
+                cmd.Parameters.AddWithValue("p_person_id", personId);
                 cmd.Parameters.AddWithValue("p_exit_time", exitTime ?? DateTime.Now);
 
                 await cnn.OpenAsync();
@@ -93,7 +93,7 @@ namespace MineLock.Api.Repositories
             }
             catch (MySqlException ex)
             {
-                throw new DataAccessException((int)ex.Number, $"Error al registrar la salida: {ex.Message}", ex);
+                throw new DataAccessException((int)ex.Number, $"{ex.Message}", ex);
             }
         }
 
@@ -118,12 +118,11 @@ namespace MineLock.Api.Repositories
                     {
                         SessionId = reader.GetInt64("session_id"),
                         EmployeeCode = reader.GetString("employee_code"),
-                        FirstName = reader.GetString("first_name"),
-                        LastName = reader.GetString("last_name"),
-                        LevelCode = reader.IsDBNull(reader.GetOrdinal("level_code")) ? null : reader.GetString("level_code"),
+                        FullName = reader.GetString("full_name"),
+                        JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
+                        LevelId = reader.GetInt32("level_id"),
                         LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),
-                        EntryTime = reader.GetDateTime("entry_time"),
-                        MinutesInside = reader.GetInt32("minutes_inside")
+                        EntryTime = reader.GetDateTime("entry_time")
                     });
                 }
                 return result;

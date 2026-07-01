@@ -1,0 +1,16 @@
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.exe
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\appsettings.Development.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\appsettings.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.deps.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.runtimeconfig.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.pdb
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Microsoft.EntityFrameworkCore.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Microsoft.OpenApi.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MySqlConnector.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Pomelo.EntityFrameworkCore.MySql.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Swashbuckle.AspNetCore.SwaggerUI.dll
