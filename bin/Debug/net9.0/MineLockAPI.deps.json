@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v9.0": {
       "MineLockAPI/1.0.0": {
         "dependencies": {
+          "MySqlConnector": "2.6.1",
           "Pomelo.EntityFrameworkCore.MySql": "9.0.0",
           "Swashbuckle.AspNetCore": "10.2.3"
         },
@@ -53,18 +54,18 @@
           }
         }
       },
-      "MySqlConnector/2.4.0": {
+      "MySqlConnector/2.6.1": {
         "runtime": {
           "lib/net9.0/MySqlConnector.dll": {
             "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.4.0.0"
+            "fileVersion": "2.6.1.0"
           }
         }
       },
       "Pomelo.EntityFrameworkCore.MySql/9.0.0": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Relational": "9.0.0",
-          "MySqlConnector": "2.4.0"
+          "MySqlConnector": "2.6.1"
         },
         "runtime": {
           "lib/net8.0/Pomelo.EntityFrameworkCore.MySql.dll": {
@@ -146,12 +147,12 @@
       "path": "microsoft.openapi/2.7.5",
       "hashPath": "microsoft.openapi.2.7.5.nupkg.sha512"
     },
-    "MySqlConnector/2.4.0": {
+    "MySqlConnector/2.6.1": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-78M+gVOjbdZEDIyXQqcA7EYlCGS3tpbUELHvn6638A2w0pkPI625ixnzsa5staAd3N9/xFmPJtkKDYwsXpFi/w==",
-      "path": "mysqlconnector/2.4.0",
-      "hashPath": "mysqlconnector.2.4.0.nupkg.sha512"
+      "sha512": "sha512-MzNSfnHWBc0Mo3zVbYxG+556zuex9obs8NYtwcPCwFahel40e49stH+osjX4k/doEHp4LT/zTtGdax4nlGWhcw==",
+      "path": "mysqlconnector/2.6.1",
+      "hashPath": "mysqlconnector.2.6.1.nupkg.sha512"
     },
     "Pomelo.EntityFrameworkCore.MySql/9.0.0": {
       "type": "package",
