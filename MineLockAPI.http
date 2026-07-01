@@ -1,0 +1,6 @@
+@MineLockAPI_HostAddress = http://localhost:5285
+
+GET {{MineLockAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
