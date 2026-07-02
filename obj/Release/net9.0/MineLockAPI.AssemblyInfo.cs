@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MineLockAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e6d5bb39c0d6cb14d19ea59be6976f9e1f04acd5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7dc2eeb76759866b1b1fe3db8e5cb00e9075fa5a")]
 [assembly: System.Reflection.AssemblyProductAttribute("MineLockAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MineLockAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,4 +1,5 @@
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.exe
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\web.config
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\web.config
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\appsettings.Development.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\appsettings.json
@@ -7,6 +8,11 @@ C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\appsettings.
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\MineLockAPI.deps.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\MineLockAPI.runtimeconfig.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\MineLockAPI.staticwebassets.endpoints.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\appsettings.Development.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\appsettings.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\MineLockAPI.deps.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\MineLockAPI.runtimeconfig.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\MineLockAPI.staticwebassets.endpoints.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.dll
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.deps.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\MineLockAPI.runtimeconfig.json

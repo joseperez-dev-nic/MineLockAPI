@@ -45,3 +45,9 @@ C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\a
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\MineLockAPI.deps.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\MineLockAPI.runtimeconfig.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\MineLockAPI.staticwebassets.endpoints.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\publish\web.config
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\publish\appsettings.Development.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\publish\appsettings.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\publish\MineLockAPI.deps.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\publish\MineLockAPI.runtimeconfig.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\bin\Release\net9.0\publish\publish\MineLockAPI.staticwebassets.endpoints.json
