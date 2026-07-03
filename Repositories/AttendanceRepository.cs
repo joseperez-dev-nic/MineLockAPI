@@ -36,7 +36,7 @@ namespace RampaSegura.Api.Repositories
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("p_person_id", personId);
                 cmd.Parameters.AddWithValue("p_level_id", levelId);
-                cmd.Parameters.AddWithValue("p_entry_time", entryTime ?? DateTime.Now);
+                cmd.Parameters.AddWithValue("p_entry_time", entryTime);
 
                 await cnn.OpenAsync();
                 await cmd.ExecuteNonQueryAsync();
@@ -59,7 +59,7 @@ namespace RampaSegura.Api.Repositories
                 using var cmd = new MySqlCommand("sp_session_close", cnn);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("p_person_id", personId);
-                cmd.Parameters.AddWithValue("p_exit_time", exitTime ?? DateTime.Now);
+                cmd.Parameters.AddWithValue("p_exit_time", exitTime);
 
                 await cnn.OpenAsync();
                 await cmd.ExecuteNonQueryAsync();

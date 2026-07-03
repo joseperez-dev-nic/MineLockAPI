@@ -1,3 +1,4 @@
+using RampaSegura.Api.Common;
 using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Requests;
 using RampaSegura.Api.Repositories;
@@ -16,19 +17,21 @@ namespace RampaSegura.Api.Controllers
         public AttendanceController(AttendanceRepository repository)
         {
             _repository = repository;
-        } 
-        
+        }
+
         [HttpPost("entry")]
         public async Task<ActionResult<object>> OpenSession([FromBody] SessionOpenRequest request)
         {
-            await _repository.OpenSessionAsync(request.PersonId, request.LevelId, request.EntryTime);
+            var entryTime = UnixTimestampConverter.UnixTimestampAFecha(request.EntryTime!.Value);
+            await _repository.OpenSessionAsync(request.PersonId!.Value, request.LevelId!.Value, entryTime);
             return Ok(new { status = "OK" });
         }
 
         [HttpPost("exit")]
         public async Task<ActionResult<object>> CloseSession([FromBody] SessionCloseRequest request)
         {
-            await _repository.CloseSessionAsync(request.PersonId, request.ExitTime);
+            var exitTime = UnixTimestampConverter.UnixTimestampAFecha(request.ExitTime!.Value);
+            await _repository.CloseSessionAsync(request.PersonId!.Value, exitTime);
             return Ok(new { status = "OK" });
         }
  

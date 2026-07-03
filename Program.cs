@@ -2,6 +2,8 @@ using RampaSegura.Api.Data;
 using RampaSegura.Api.Middleware;
 using RampaSegura.Api.Repositories;
 using RampaSegura.Api.Security;
+using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,19 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("No se encontró la cadena de conexión 'RampaSegura'.");
 }
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var error = context.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault() ?? "VALIDATION_ERROR";
+
+            return new BadRequestObjectResult(new { error });
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

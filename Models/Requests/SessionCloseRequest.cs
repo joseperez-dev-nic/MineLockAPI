@@ -1,10 +1,14 @@
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace RampaSegura.Api.Models.Requests
 {
     public class SessionCloseRequest
     {
-        public long PersonId { get; set; } 
-        public DateTime? ExitTime { get; set; }
+        [Required(ErrorMessage = "PERSON_ID_REQUIRED")]
+        public long? PersonId { get; set; }
+
+        [Required(ErrorMessage = "EXIT_TIME_REQUIRED")]
+        public long? ExitTime { get; set; }
     }
 }
+
