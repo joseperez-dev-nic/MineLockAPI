@@ -10,7 +10,9 @@ namespace RampaSegura.Api.Common
     {
         public static DateTime UnixTimestampAFecha(long fechaHora)
         {
-            return DateTime.UnixEpoch.AddMilliseconds(fechaHora).ToLocalTime();
+            var utc = DateTime.UnixEpoch.AddMilliseconds(fechaHora);
+            // Offset fijo UTC-6, Centroamérica no tiene horario de verano
+            return utc.AddHours(-6);
         }
     }
 }
