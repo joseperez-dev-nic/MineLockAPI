@@ -1,4 +1,4 @@
-namespace MineLock.Api.Models.Requests
+namespace RampaSegura.Api.Models.Requests
 {
     public class SyncFinishRequest
     {

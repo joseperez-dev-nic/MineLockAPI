@@ -1242,9 +1242,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\MineLockAPI.csproj",
-      "projectName": "MineLockAPI",
-      "projectPath": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\MineLockAPI.csproj",
+      "projectUniqueName": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\RampaSeguraAPI.csproj",
+      "projectName": "RampaSeguraAPI",
+      "projectPath": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\RampaSeguraAPI.csproj",
       "packagesPath": "C:\\Users\\nicar\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\obj\\",
       "projectStyle": "PackageReference",

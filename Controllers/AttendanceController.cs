@@ -1,11 +1,11 @@
-using MineLock.Api.Models;
-using MineLock.Api.Models.Requests;
-using MineLock.Api.Repositories;
+using RampaSegura.Api.Models;
+using RampaSegura.Api.Models.Requests;
+using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MineLock.Api.Controllers
+namespace RampaSegura.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -19,16 +19,16 @@ namespace MineLock.Api.Controllers
         } 
         
         [HttpPost("entry")]
-        public async Task<ActionResult<SessionOpenResult>> OpenSession([FromBody] SessionOpenRequest request)
+        public async Task<ActionResult<object>> OpenSession([FromBody] SessionOpenRequest request)
         {
-            var session = await _repository.OpenSessionAsync(request.PersonId, request.LevelId, request.EntryTime);
+            await _repository.OpenSessionAsync(request.PersonId, request.LevelId, request.EntryTime);
             return Ok(new { status = "OK" });
         }
- 
+
         [HttpPost("exit")]
-        public async Task<ActionResult<SessionCloseResult>> CloseSession([FromBody] SessionCloseRequest request)
+        public async Task<ActionResult<object>> CloseSession([FromBody] SessionCloseRequest request)
         {
-            var session = await _repository.CloseSessionAsync(request.PersonId, request.ExitTime);
+            await _repository.CloseSessionAsync(request.PersonId, request.ExitTime);
             return Ok(new { status = "OK" });
         }
  

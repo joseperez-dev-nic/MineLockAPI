@@ -1,10 +1,10 @@
-using MineLock.Api.Common;
+using RampaSegura.Api.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
-namespace MineLock.Api.Middleware
+namespace RampaSegura.Api.Middleware
 {
     /// <summary>
     /// Convierte cualquier DataAccessException lanzada desde un repository en una

@@ -1,4 +1,4 @@
-namespace MineLock.Api.Models
+namespace RampaSegura.Api.Models
 {
     /// <summary>
     /// Coincide exactamente con sp_level_list: solo niveles activos,

@@ -1,19 +1,19 @@
-using MineLock.Api.Common;
-using MineLock.Api.Data;
-using MineLock.Api.Models;
+using RampaSegura.Api.Common;
+using RampaSegura.Api.Data;
+using RampaSegura.Api.Models;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace MineLock.Api.Repositories
+namespace RampaSegura.Api.Repositories
 {
     public class SyncRepository
     {
-        private readonly IMineLockConnectionFactory _factory;
+        private readonly IRampaSeguraConnectionFactory _factory;
 
-        public SyncRepository(IMineLockConnectionFactory factory)
+        public SyncRepository(IRampaSeguraConnectionFactory factory)
         {
             _factory = factory;
         }

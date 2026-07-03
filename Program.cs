@@ -1,15 +1,15 @@
-using MineLock.Api.Data;
-using MineLock.Api.Middleware;
-using MineLock.Api.Repositories;
-using MineLock.Api.Security;
+using RampaSegura.Api.Data;
+using RampaSegura.Api.Middleware;
+using RampaSegura.Api.Repositories;
+using RampaSegura.Api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Obtener la cadena de conexión (a MySQL, db_minelock_lt_demo)
-var connectionString = builder.Configuration.GetConnectionString("MineLock");
+var connectionString = builder.Configuration.GetConnectionString("RampaSegura");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    throw new InvalidOperationException("No se encontró la cadena de conexión 'MineLock'.");
+    throw new InvalidOperationException("No se encontró la cadena de conexión 'RampaSegura'.");
 }
 
 builder.Services.AddControllers();
@@ -17,7 +17,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Data access
-builder.Services.AddSingleton<IMineLockConnectionFactory, MineLockConnectionFactory>();
+builder.Services.AddSingleton<IRampaSeguraConnectionFactory, RampaSeguraConnectionFactory>();
 builder.Services.AddScoped<LevelRepository>();
 builder.Services.AddScoped<AttendanceRepository>();
 builder.Services.AddScoped<SyncRepository>();

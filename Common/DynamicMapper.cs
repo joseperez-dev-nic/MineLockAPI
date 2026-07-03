@@ -2,7 +2,7 @@ using MySqlConnector;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MineLock.Api.Common
+namespace RampaSegura.Api.Common
 {
     /// <summary>
     /// Convierte el resultado de un MySqlDataReader a JSON genérico (diccionario

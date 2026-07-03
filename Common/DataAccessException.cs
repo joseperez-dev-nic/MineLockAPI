@@ -1,6 +1,6 @@
 using System;
 
-namespace MineLock.Api.Common
+namespace RampaSegura.Api.Common
 {
     /// <summary>
     /// Excepción para envolver cualquier fallo de acceso a datos (MySQL u otro).

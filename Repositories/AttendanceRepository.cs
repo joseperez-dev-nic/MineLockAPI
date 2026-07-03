@@ -1,31 +1,33 @@
-using MineLock.Api.Common;
-using MineLock.Api.Data;
-using MineLock.Api.Models;
+using RampaSegura.Api.Common;
+using RampaSegura.Api.Data;
+using RampaSegura.Api.Models;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace MineLock.Api.Repositories
+namespace RampaSegura.Api.Repositories
 {
     public class AttendanceRepository
     {
-        private readonly IMineLockConnectionFactory _factory;
+        private readonly IRampaSeguraConnectionFactory _factory;
 
-        public AttendanceRepository(IMineLockConnectionFactory factory)
+        public AttendanceRepository(IRampaSeguraConnectionFactory factory)
         {
             _factory = factory;
         }
 
         /// <summary>
-        /// sp_session_open(p_employee_code, p_level_code, p_entry_time).
+        /// sp_session_open(p_person_id, p_level_id, p_entry_time).
         /// Señaliza SQLSTATE '45000' con PERSON_NOT_FOUND, LEVEL_NOT_FOUND o
-        /// ALREADY_INSIDE si la coherencia falla. Ese texto queda en ex.Message
-        /// y se propaga en el mensaje de la excepción para que el consumidor
-        /// (Candados, o quien pruebe la API) sepa exactamente qué regla falló.
+        /// ALREADY_INSIDE si la coherencia falla. Ese texto queda en ex.Message.
+        /// Usa ExecuteNonQueryAsync en vez de leer el SELECT final: el controller
+        /// no usa el detalle de la sesión, solo le importa si tuvo éxito o no,
+        /// así que no hace falta parsear columnas ni lidiar con los result sets
+        /// que agrega la llamada anidada a sp_person_sync_from_ncheck.
         /// </summary>
-        public async Task<SessionOpenResult?> OpenSessionAsync(long personId, int levelId, DateTime? entryTime)
+        public async Task OpenSessionAsync(long personId, int levelId, DateTime? entryTime)
         {
             try
             {
@@ -37,34 +39,19 @@ namespace MineLock.Api.Repositories
                 cmd.Parameters.AddWithValue("p_entry_time", entryTime ?? DateTime.Now);
 
                 await cnn.OpenAsync();
-                using var reader = await cmd.ExecuteReaderAsync();
-
-                if (await reader.ReadAsync())
-                {
-                    return new SessionOpenResult
-                    {
-                        SessionId = reader.GetInt64("session_id"),
-                        EmployeeCode = reader.GetString("employee_code"),
-                        FirstName = reader.GetString("first_name"),
-                        LastName = reader.GetString("last_name"),
-                        LevelCode = reader.IsDBNull(reader.GetOrdinal("level_code")) ? null : reader.GetString("level_code"),
-                        LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),
-                        EntryTime = reader.GetDateTime("entry_time")
-                    };
-                }
-                return null;
+                await cmd.ExecuteNonQueryAsync();
             }
             catch (MySqlException ex)
             {
                 throw new DataAccessException((int)ex.Number, $"{ex.Message}", ex);
             }
         }
-
+        
         /// <summary>
-        /// sp_session_close(p_employee_code, p_exit_time).
+        /// sp_session_close(p_person_id, p_exit_time).
         /// Señaliza PERSON_NOT_FOUND o NOT_INSIDE si la coherencia falla.
         /// </summary>
-        public async Task<SessionCloseResult?> CloseSessionAsync(long personId, DateTime? exitTime)
+        public async Task CloseSessionAsync(long personId, DateTime? exitTime)
         {
             try
             {
@@ -75,21 +62,7 @@ namespace MineLock.Api.Repositories
                 cmd.Parameters.AddWithValue("p_exit_time", exitTime ?? DateTime.Now);
 
                 await cnn.OpenAsync();
-                using var reader = await cmd.ExecuteReaderAsync();
-
-                if (await reader.ReadAsync())
-                {
-                    return new SessionCloseResult
-                    {
-                        SessionId = reader.GetInt64("session_id"),
-                        EmployeeCode = reader.GetString("employee_code"),
-                        FirstName = reader.GetString("first_name"),
-                        LastName = reader.GetString("last_name"),
-                        EntryTime = reader.GetDateTime("entry_time"),
-                        ExitTime = reader.GetDateTime("exit_time")
-                    };
-                }
-                return null;
+                await cmd.ExecuteNonQueryAsync();
             }
             catch (MySqlException ex)
             {
@@ -119,6 +92,7 @@ namespace MineLock.Api.Repositories
                         SessionId = reader.GetInt64("session_id"),
                         EmployeeCode = reader.GetString("employee_code"),
                         FullName = reader.GetString("full_name"),
+                        Department = reader.IsDBNull(reader.GetOrdinal("department")) ? null : reader.GetString("department"),
                         JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
                         LevelId = reader.GetInt32("level_id"),
                         LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),

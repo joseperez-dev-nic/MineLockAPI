@@ -1,0 +1,6 @@
+@RampaSeguraAPI_HostAddress = http://localhost:5285
+
+GET {{RampaSeguraAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

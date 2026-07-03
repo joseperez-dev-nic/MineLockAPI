@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MineLock.Api.Security
+namespace RampaSegura.Api.Security
 {
     /// <summary>
     /// Autenticación simple por header "X-Api-Key". No hay login ni identidad de usuario:

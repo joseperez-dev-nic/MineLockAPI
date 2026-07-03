@@ -1,12 +1,12 @@
-using MineLock.Api.Models;
-using MineLock.Api.Models.Requests;
-using MineLock.Api.Repositories;
+using RampaSegura.Api.Models;
+using RampaSegura.Api.Models.Requests;
+using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MineLock.Api.Controllers
+namespace RampaSegura.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

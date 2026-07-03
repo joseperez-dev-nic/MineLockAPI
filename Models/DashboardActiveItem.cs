@@ -1,6 +1,6 @@
 using System;
 
-namespace MineLock.Api.Models
+namespace RampaSegura.Api.Models
 {
     /// <summary>
     /// Coincide con sp_dashboard_active. Ya no trae minutes_inside ni level_code;
@@ -12,6 +12,7 @@ namespace MineLock.Api.Models
         public long SessionId { get; set; }
         public string EmployeeCode { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
+        public string? Department { get; set; }
         public string? JobPosition { get; set; }
         public int LevelId { get; set; }
         public string? LevelName { get; set; }

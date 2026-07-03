@@ -1,6 +1,6 @@
 using System;
 
-namespace MineLock.Api.Models
+namespace RampaSegura.Api.Models
 {
     /// <summary>
     /// Coincide con sp_sync_pending: sesiones tocadas desde el último sync
