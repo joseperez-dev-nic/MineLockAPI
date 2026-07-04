@@ -35,6 +35,8 @@ builder.Services.AddSingleton<IRampaSeguraConnectionFactory, RampaSeguraConnecti
 builder.Services.AddScoped<LevelRepository>();
 builder.Services.AddScoped<AttendanceRepository>();
 builder.Services.AddScoped<SyncRepository>();
+builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<PersonRepository>();
 
 var app = builder.Build();
 
