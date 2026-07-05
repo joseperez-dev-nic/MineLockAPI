@@ -1,4 +1,6 @@
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\RampaSeguraAPI.exe
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\web.config
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\web.config
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\web.config
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\web.config
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\web.config
@@ -22,6 +24,16 @@ C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publ
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\appsettings.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\appsettings.Development.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\appsettings.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\appsettings.Development.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\appsettings.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\appsettings.Development.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\appsettings.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.deps.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.runtimeconfig.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.staticwebassets.endpoints.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.deps.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.runtimeconfig.json
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.staticwebassets.endpoints.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.deps.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.runtimeconfig.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\publish\publish\publish\publish\publish\publish\publish\RampaSeguraAPI.staticwebassets.endpoints.json
@@ -47,6 +59,7 @@ C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\RampaSeguraAPI.dll
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\RampaSeguraAPI.deps.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\RampaSeguraAPI.runtimeconfig.json
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\RampaSeguraAPI.pdb
+C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\BCrypt-Net-Next.dll
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Microsoft.EntityFrameworkCore.dll
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Microsoft.EntityFrameworkCore.Abstractions.dll
 C:\Users\nicar\source\repos\MineLockAPI\MineLockAPI\publish\Microsoft.EntityFrameworkCore.Relational.dll
