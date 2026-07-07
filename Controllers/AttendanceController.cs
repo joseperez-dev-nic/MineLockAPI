@@ -2,9 +2,8 @@ using RampaSegura.Api.Common;
 using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Requests;
 using RampaSegura.Api.Repositories;
-using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc; 
+using System.ComponentModel.DataAnnotations; 
 
 namespace RampaSegura.Api.Controllers
 {
@@ -39,6 +38,21 @@ namespace RampaSegura.Api.Controllers
         public async Task<ActionResult<List<DashboardActiveItem>>> GetDashboard()
         {
             var data = await _repository.GetDashboardActiveAsync();
+            return Ok(data);
+        }
+
+        /// GET /api/attendance/report?fechaDesde=2026-07-01&fechaHasta=2026-07-03
+        [HttpGet("report")]
+        public async Task<ActionResult<List<SessionReportItem>>> GetReport(
+            [FromQuery, Required(ErrorMessage = "FECHA_DESDE_REQUIRED")] DateOnly? fechaDesde,
+            [FromQuery, Required(ErrorMessage = "FECHA_HASTA_REQUIRED")] DateOnly? fechaHasta)
+        {
+            if (fechaHasta!.Value < fechaDesde!.Value)
+            {
+                return BadRequest(new { error = "RANGO_FECHAS_INVALIDO" });
+            }
+
+            var data = await _repository.GetReportAsync(fechaDesde.Value, fechaHasta.Value);
             return Ok(data);
         }
     }

@@ -106,5 +106,47 @@ namespace RampaSegura.Api.Repositories
                 throw new DataAccessException((int)ex.Number, "Error al obtener el dashboard de personal activo", ex);
             }
         }
+
+        /// <summary>
+        /// sp_session_report(p_fecha_desde, p_fecha_hasta) -- histórico de sesiones
+        /// con entry_time dentro del rango [fechaDesde, fechaHasta] (ambos días incluidos).
+        /// </summary>
+        public async Task<List<SessionReportItem>> GetReportAsync(DateOnly fechaDesde, DateOnly fechaHasta)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_session_report", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_fecha_desde", fechaDesde);
+                cmd.Parameters.AddWithValue("p_fecha_hasta", fechaHasta);
+
+                await cnn.OpenAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                var result = new List<SessionReportItem>();
+                while (await reader.ReadAsync())
+                {
+                    result.Add(new SessionReportItem
+                    {
+                        SessionId = reader.GetInt64("session_id"),
+                        EmployeeCode = reader.GetString("employee_code"),
+                        FullName = reader.GetString("full_name"),
+                        JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
+                        Department = reader.IsDBNull(reader.GetOrdinal("department")) ? null : reader.GetString("department"),
+                        LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),
+                        EntryTime = reader.GetDateTime("entry_time"),
+                        ExitTime = reader.IsDBNull(reader.GetOrdinal("exit_time")) ? null : reader.GetDateTime("exit_time"),
+                        TimeInside = reader.IsDBNull(reader.GetOrdinal("time_inside")) ? null : reader.GetTimeSpan("time_inside"),
+                        Status = reader.GetString("status")
+                    });
+                }
+                return result;
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al generar el reporte de sesiones", ex);
+            }
+        }
     }
 }

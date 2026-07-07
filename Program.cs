@@ -30,6 +30,17 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+const string FrontendCorsPolicy = "FrontendCors";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(FrontendCorsPolicy, policy =>
+    {
+        policy.WithOrigins("https://demonicarobotica-001-site8.etempurl.com")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // Data access
 builder.Services.AddSingleton<IRampaSeguraConnectionFactory, RampaSeguraConnectionFactory>();
 builder.Services.AddScoped<LevelRepository>();
@@ -47,6 +58,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Debe ir antes de la validación de API key: así las peticiones preflight (OPTIONS)
+// del navegador reciben los headers de CORS sin toparse con el chequeo de X-Api-Key.
+app.UseCors(FrontendCorsPolicy);
 
 // Primero traduce DataAccessException a HTTP, luego valida la API key
 app.UseDataAccessExceptionHandling();
