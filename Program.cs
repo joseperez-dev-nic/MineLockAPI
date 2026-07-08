@@ -2,6 +2,7 @@ using RampaSegura.Api.Data;
 using RampaSegura.Api.Middleware;
 using RampaSegura.Api.Repositories;
 using RampaSegura.Api.Security;
+using RampaSegura.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -48,6 +49,7 @@ builder.Services.AddScoped<AttendanceRepository>();
 builder.Services.AddScoped<SyncRepository>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<PersonRepository>();
+builder.Services.AddHostedService<PersonSyncBackgroundService>();
 
 var app = builder.Build();
 

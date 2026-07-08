@@ -24,5 +24,21 @@ namespace RampaSegura.Api.Controllers
             var data = await _repository.GetPersonListAsync();
             return Ok(data);
         }
+
+        /// GET /api/person/list
+        [HttpGet("list")]
+        public async Task<ActionResult<List<Person>>> GetLBPersonList()
+        {
+            var data = await _repository.GetLBPersonListAsync();
+            return Ok(data);
+        }
+
+        /// POST /api/person/sync
+        [HttpPost("sync")]
+        public async Task<ActionResult<object>> SyncFromNcheck()
+        {
+            var rowsAffected = await _repository.SyncAllFromNcheckAsync();
+            return Ok(new { status = "OK", rowsAffected });
+        }
     }
 }
