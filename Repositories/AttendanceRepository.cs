@@ -96,7 +96,9 @@ namespace RampaSegura.Api.Repositories
                         JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
                         LevelId = reader.GetInt32("level_id"),
                         LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),
-                        EntryTime = reader.GetDateTime("entry_time")
+                        EntryTime = reader.GetDateTime("entry_time"),
+                        MinutesInside = reader.GetInt32("minutes_inside"),
+                        TiempoDentro = reader.GetString("tiempo_dentro")
                     });
                 }
                 return result;
@@ -146,6 +148,49 @@ namespace RampaSegura.Api.Repositories
             catch (MySqlException ex)
             {
                 throw new DataAccessException((int)ex.Number, "Error al generar el reporte de sesiones", ex);
+            }
+        }
+
+        /// <summary>
+        /// sp_warning_report(p_fecha_desde, p_fecha_hasta) -- sesiones (abiertas o
+        /// cerradas) que superaron 480 min dentro de la mina. Ambas fechas son
+        /// opcionales: el SP las ignora si vienen NULL.
+        /// </summary>
+        public async Task<List<WarningReportItem>> GetWarningReportAsync(DateOnly? fechaDesde, DateOnly? fechaHasta)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_warning_report", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_fecha_desde", (object?)fechaDesde ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("p_fecha_hasta", (object?)fechaHasta ?? DBNull.Value);
+
+                await cnn.OpenAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                var result = new List<WarningReportItem>();
+                while (await reader.ReadAsync())
+                {
+                    result.Add(new WarningReportItem
+                    {
+                        SessionId = reader.GetInt64("session_id"),
+                        EmployeeCode = reader.GetString("employee_code"),
+                        FullName = reader.GetString("full_name"),
+                        JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
+                        Department = reader.IsDBNull(reader.GetOrdinal("department")) ? null : reader.GetString("department"),
+                        LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),
+                        EntryTime = reader.GetDateTime("entry_time"),
+                        ExitTime = reader.IsDBNull(reader.GetOrdinal("exit_time")) ? null : reader.GetDateTime("exit_time"),
+                        MinutosDentro = reader.GetInt32("minutos_dentro"),
+                        Estado = reader.GetString("estado")
+                    });
+                }
+                return result;
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al generar el reporte de advertencias", ex);
             }
         }
     }

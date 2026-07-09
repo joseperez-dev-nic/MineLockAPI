@@ -3,9 +3,9 @@ using System;
 namespace RampaSegura.Api.Models
 {
     /// <summary>
-    /// Coincide con sp_dashboard_active. Ya no trae minutes_inside ni level_code;
-    /// si necesitas resaltar por umbral de tiempo en el board, calcula
-    /// (DateTime.Now - EntryTime) en el frontend o aquí mismo al mapear.
+    /// Coincide con sp_dashboard_active. minutes_inside y tiempo_dentro se calculan
+    /// contra NOW() en el momento de la consulta (no se guardan), así que cambian
+    /// en cada llamada mientras la sesión siga abierta.
     /// </summary>
     public class DashboardActiveItem
     {
@@ -17,5 +17,7 @@ namespace RampaSegura.Api.Models
         public int LevelId { get; set; }
         public string? LevelName { get; set; }
         public DateTime EntryTime { get; set; }
+        public int MinutesInside { get; set; }
+        public string TiempoDentro { get; set; } = string.Empty;
     }
 }

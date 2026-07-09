@@ -1,3 +1,4 @@
+using RampaSegura.Api.Common;
 using RampaSegura.Api.Models.Requests;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -10,25 +11,33 @@ namespace RampaSegura.Api.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly UserRepository _repository;
+        private const string Module = "AuthController.Login";
 
-        public AuthController(UserRepository repository)
+        private readonly UserRepository _repository;
+        private readonly ErrorLogRepository _errorLogRepository;
+
+        public AuthController(UserRepository repository, ErrorLogRepository errorLogRepository)
         {
             _repository = repository;
+            _errorLogRepository = errorLogRepository;
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<object>> Login([FromBody] LoginRequest request)
         {
+            var attemptedUser = request.Login ?? "N/A";
+
             var user = await _repository.GetByUsernameOrEmailAsync(request.Login!);
 
             if (user is null)
             {
+                await _errorLogRepository.RegisterAsync(Module, StatusCodes.Status401Unauthorized, "USER_NOT_FOUND", HttpContext.GetClientIp(), attemptedUser);
                 return Unauthorized(new { error = "USER_NOT_FOUND" });
             }
 
             if (!user.IsActive)
             {
+                await _errorLogRepository.RegisterAsync(Module, StatusCodes.Status403Forbidden, "USER_INACTIVE", HttpContext.GetClientIp(), attemptedUser);
                 return StatusCode(StatusCodes.Status403Forbidden, new { error = "USER_INACTIVE" });
             }
 
@@ -45,6 +54,7 @@ namespace RampaSegura.Api.Controllers
 
             if (!passwordOk)
             {
+                await _errorLogRepository.RegisterAsync(Module, StatusCodes.Status401Unauthorized, "INVALID_PASSWORD", HttpContext.GetClientIp(), attemptedUser);
                 return Unauthorized(new { error = "INVALID_PASSWORD" });
             }
 

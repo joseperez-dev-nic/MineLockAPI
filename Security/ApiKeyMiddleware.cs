@@ -1,3 +1,4 @@
+using RampaSegura.Api.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +14,7 @@ namespace RampaSegura.Api.Security
     /// cualquier request que traiga la key configurada en appsettings/variables de entorno pasa.
     /// Deja pasar /swagger sin key para poder explorar la API en desarrollo.
     /// La comparación usa FixedTimeEquals para no filtrar información por tiempo de respuesta.
+    /// Cada rechazo (401) queda registrado en la base de errores compartida.
     /// </summary>
     public class ApiKeyMiddleware
     {
@@ -24,7 +26,7 @@ namespace RampaSegura.Api.Security
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, IConfiguration configuration)
+        public async Task InvokeAsync(HttpContext context, IConfiguration configuration, ErrorLogRepository errorLogRepository)
         {
             if (context.Request.Path.StartsWithSegments("/swagger"))
             {
@@ -32,10 +34,15 @@ namespace RampaSegura.Api.Security
                 return;
             }
 
+            var module = $"{context.Request.Method} {context.Request.Path}";
+
             if (!context.Request.Headers.TryGetValue(HeaderName, out var extractedKey))
             {
+                const string message = "Falta el header X-Api-Key.";
+                await errorLogRepository.RegisterAsync(module, StatusCodes.Status401Unauthorized, message, context.GetClientIp(), "N/A");
+
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsync("Falta el header X-Api-Key.");
+                await context.Response.WriteAsync(message);
                 return;
             }
 
@@ -43,8 +50,11 @@ namespace RampaSegura.Api.Security
 
             if (string.IsNullOrEmpty(validKey) || !IsValidKey(extractedKey!, validKey))
             {
+                const string message = "X-Api-Key inválida.";
+                await errorLogRepository.RegisterAsync(module, StatusCodes.Status401Unauthorized, message, context.GetClientIp(), "N/A");
+
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsync("X-Api-Key inválida.");
+                await context.Response.WriteAsync(message);
                 return;
             }
 

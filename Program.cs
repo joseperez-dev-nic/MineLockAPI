@@ -1,3 +1,4 @@
+using RampaSegura.Api.Common;
 using RampaSegura.Api.Data;
 using RampaSegura.Api.Middleware;
 using RampaSegura.Api.Repositories;
@@ -50,6 +51,10 @@ builder.Services.AddScoped<SyncRepository>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<PersonRepository>();
 builder.Services.AddHostedService<PersonSyncBackgroundService>();
+
+// Log de errores compartido (SQL Server, db_errors_log -- pa_registrar_error)
+builder.Services.AddSingleton<IErrorLogConnectionFactory, ErrorLogConnectionFactory>();
+builder.Services.AddScoped<ErrorLogRepository>();
 
 var app = builder.Build();
 

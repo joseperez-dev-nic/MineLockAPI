@@ -55,5 +55,21 @@ namespace RampaSegura.Api.Controllers
             var data = await _repository.GetReportAsync(fechaDesde.Value, fechaHasta.Value);
             return Ok(data);
         }
+
+        /// GET /api/attendance/warnings?fechaDesde=2026-07-01&fechaHasta=2026-07-03
+        /// Ambas fechas son opcionales: si se omiten, trae advertencias de todo el histórico.
+        [HttpGet("warnings")]
+        public async Task<ActionResult<List<WarningReportItem>>> GetWarnings(
+            [FromQuery] DateOnly? fechaDesde,
+            [FromQuery] DateOnly? fechaHasta)
+        {
+            if (fechaDesde.HasValue && fechaHasta.HasValue && fechaHasta.Value < fechaDesde.Value)
+            {
+                return BadRequest(new { error = "RANGO_FECHAS_INVALIDO" });
+            }
+
+            var data = await _repository.GetWarningReportAsync(fechaDesde, fechaHasta);
+            return Ok(data);
+        }
     }
 }
