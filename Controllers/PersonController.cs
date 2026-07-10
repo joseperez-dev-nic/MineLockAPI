@@ -40,5 +40,16 @@ namespace RampaSegura.Api.Controllers
             var rowsAffected = await _repository.SyncAllFromNcheckAsync();
             return Ok(new { status = "OK", rowsAffected });
         }
+
+        /// GET /api/person/photos
+        /// Todos los empleados activos con foto (employee_code + base64).
+        /// Lo consume el script de arranque del frontend para guardar las
+        /// imágenes en assets/profile-photos/{employee_code}.{ext}.
+        [HttpGet("photos")]
+        public async Task<ActionResult<List<ProfilePhotoExport>>> GetProfilePhotos()
+        {
+            var data = await _repository.GetAllProfilePhotosAsync();
+            return Ok(data);
+        }
     }
 }

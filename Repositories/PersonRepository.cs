@@ -2,6 +2,7 @@ using RampaSegura.Api.Common;
 using RampaSegura.Api.Data;
 using RampaSegura.Api.Models;
 using MySqlConnector;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
@@ -86,6 +87,44 @@ namespace RampaSegura.Api.Repositories
             catch (MySqlException ex)
             {
                 throw new DataAccessException((int)ex.Number, "Error al listar el personal local", ex);
+            }
+        }
+
+        /// <summary>
+        /// sp_person_photos_all() -- sin parámetros. Todos los empleados activos que
+        /// tienen foto, con su employee_code y la imagen en base64. Se usa para
+        /// exportar las fotos a disco (assets/profile-photos) al arrancar la app.
+        /// </summary>
+        public async Task<List<ProfilePhotoExport>> GetAllProfilePhotosAsync()
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_person_photos_all", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                await cnn.OpenAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                var result = new List<ProfilePhotoExport>();
+                while (await reader.ReadAsync())
+                {
+                    var photoOrdinal = reader.GetOrdinal("photo_data");
+                    if (reader.IsDBNull(photoOrdinal)) continue;
+
+                    var photoBytes = (byte[])reader.GetValue(photoOrdinal);
+                    result.Add(new ProfilePhotoExport
+                    {
+                        EmployeeCode = reader.GetString("employee_code"),
+                        PhotoData = Convert.ToBase64String(photoBytes),
+                        MimeType = reader.IsDBNull(reader.GetOrdinal("mime_type")) ? null : reader.GetString("mime_type")
+                    });
+                }
+                return result;
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al obtener las fotos de perfil de los empleados", ex);
             }
         }
 

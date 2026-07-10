@@ -20,6 +20,5 @@ namespace RampaSegura.Api.Models
         public DateTime EntryTime { get; set; }
         public int MinutesInside { get; set; }
         public string TiempoDentro { get; set; } = string.Empty;
-        public string? PhotoData { get; set; }
     }
 }

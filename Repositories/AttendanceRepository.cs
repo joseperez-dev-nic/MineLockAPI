@@ -72,7 +72,8 @@ namespace RampaSegura.Api.Repositories
 
         /// <summary>
         /// sp_dashboard_active() -- sin parámetros. Personal dentro de la mina ahora mismo.
-        /// Ahora también trae las fotos de perfil desde NCHECK en base64.
+        /// Las fotos NO viajan aquí: se sirven aparte como archivos por código de
+        /// empleado (public/profile-photos), poblados vía GET /api/person/photos.
         /// </summary>
         public async Task<List<DashboardActiveItem>> GetDashboardActiveAsync()
         {
@@ -88,11 +89,10 @@ namespace RampaSegura.Api.Repositories
                 var result = new List<DashboardActiveItem>();
                 while (await reader.ReadAsync())
                 {
-                    var personId = reader.GetInt64("person_id");
                     var item = new DashboardActiveItem
                     {
                         SessionId = reader.GetInt64("session_id"),
-                        PersonId = personId,
+                        PersonId = reader.GetInt64("person_id"),
                         EmployeeCode = reader.GetString("employee_code"),
                         FullName = reader.GetString("full_name"),
                         Department = reader.IsDBNull(reader.GetOrdinal("department")) ? null : reader.GetString("department"),
@@ -101,8 +101,7 @@ namespace RampaSegura.Api.Repositories
                         LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),
                         EntryTime = reader.GetDateTime("entry_time"),
                         MinutesInside = reader.GetInt32("minutes_inside"),
-                        TiempoDentro = reader.GetString("tiempo_dentro"),
-                        PhotoData = await GetPersonPhotoAsync(personId)
+                        TiempoDentro = reader.GetString("tiempo_dentro")
                     };
                     result.Add(item);
                 }
@@ -111,38 +110,6 @@ namespace RampaSegura.Api.Repositories
             catch (MySqlException ex)
             {
                 throw new DataAccessException((int)ex.Number, "Error al obtener el dashboard de personal activo", ex);
-            }
-        }
-
-        /// <summary>
-        /// Obtiene la foto de perfil de una persona desde NCHECK en formato base64.
-        /// Retorna null si no existe foto.
-        /// </summary>
-        private async Task<string?> GetPersonPhotoAsync(long personId)
-        {
-            try
-            {
-                using var cnn = _factory.CreateConnection();
-                using var cmd = new MySqlCommand("sp_get_person_photo", cnn);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("p_person_id", personId);
-
-                await cnn.OpenAsync();
-                using var reader = await cmd.ExecuteReaderAsync();
-
-                if (await reader.ReadAsync())
-                {
-                    if (!reader.IsDBNull(0))
-                    {
-                        var photoBytes = (byte[])reader.GetValue(0);
-                        return Convert.ToBase64String(photoBytes);
-                    }
-                }
-                return null;
-            }
-            catch
-            {
-                return null;
             }
         }
 
