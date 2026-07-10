@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RampaSeguraAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+818f9b9fdbbefc6745c888d40769f264d13cf18c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22597aadb3f015bc67e5981240089264974844d0")]
 [assembly: System.Reflection.AssemblyProductAttribute("RampaSeguraAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RampaSeguraAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
