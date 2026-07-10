@@ -1,0 +1,12 @@
+# Salidas de compilación de .NET
+bin/
+obj/
+publish/
+
+# Archivos de usuario / IDE
+*.user
+*.suo
+.vs/
+
+# Secretos locales (si algún día usas user-secrets)
+*.local.json

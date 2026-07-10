@@ -45,9 +45,14 @@ builder.Services.AddCors(options =>
 
 // Data access
 builder.Services.AddSingleton<IRampaSeguraConnectionFactory, RampaSeguraConnectionFactory>();
+builder.Services.AddSingleton<IRampaSeguraLocalConnectionFactory, RampaSeguraLocalConnectionFactory>();
+builder.Services.AddSingleton<IRampaSeguraCloudConnectionFactory, RampaSeguraCloudConnectionFactory>();
 builder.Services.AddScoped<LevelRepository>();
 builder.Services.AddScoped<AttendanceRepository>();
-builder.Services.AddScoped<SyncRepository>();
+builder.Services.AddScoped<AttendanceSyncRepository>();
+builder.Services.AddScoped<PersonSyncRepository>();
+builder.Services.AddScoped<PhotoSyncRepository>();
+builder.Services.AddScoped<SyncLogSyncRepository>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<PersonRepository>();
 builder.Services.AddScoped<MineRepository>();
