@@ -10,6 +10,7 @@ namespace RampaSegura.Api.Models
     public class DashboardActiveItem
     {
         public long SessionId { get; set; }
+        public long PersonId { get; set; }
         public string EmployeeCode { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string? Department { get; set; }
@@ -19,5 +20,6 @@ namespace RampaSegura.Api.Models
         public DateTime EntryTime { get; set; }
         public int MinutesInside { get; set; }
         public string TiempoDentro { get; set; } = string.Empty;
+        public string? PhotoData { get; set; }
     }
 }

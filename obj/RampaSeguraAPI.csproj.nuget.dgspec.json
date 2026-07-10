@@ -1,25 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\RampaSeguraAPI.csproj": {}
+    "C:\\Users\\SOPORTE\\Documents\\MinaLimon\\CANDADOS\\API\\MineLockAPI\\RampaSeguraAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\RampaSeguraAPI.csproj": {
+    "C:\\Users\\SOPORTE\\Documents\\MinaLimon\\CANDADOS\\API\\MineLockAPI\\RampaSeguraAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\RampaSeguraAPI.csproj",
+        "projectUniqueName": "C:\\Users\\SOPORTE\\Documents\\MinaLimon\\CANDADOS\\API\\MineLockAPI\\RampaSeguraAPI.csproj",
         "projectName": "RampaSeguraAPI",
-        "projectPath": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\RampaSeguraAPI.csproj",
-        "packagesPath": "C:\\Users\\nicar\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\nicar\\source\\repos\\MineLockAPI\\MineLockAPI\\obj\\",
+        "projectPath": "C:\\Users\\SOPORTE\\Documents\\MinaLimon\\CANDADOS\\API\\MineLockAPI\\RampaSeguraAPI.csproj",
+        "packagesPath": "C:\\Users\\SOPORTE\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\SOPORTE\\Documents\\MinaLimon\\CANDADOS\\API\\MineLockAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files\\DevExpress 24.2\\Components\\Offline Packages",
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\nicar\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 24.2.config",
+          "C:\\Users\\SOPORTE\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -28,12 +26,11 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\DevExpress 24.2\\Components\\System\\Components\\Packages": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net9.0": {
+            "framework": "net9.0",
             "targetAlias": "net9.0",
             "projectReferences": {}
           }
@@ -48,10 +45,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net9.0": {
+          "framework": "net9.0",
           "targetAlias": "net9.0",
           "dependencies": {
             "BCrypt.Net-Next": {
@@ -89,19 +87,19 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[9.0.13, 9.0.13]"
+              "version": "[9.0.17, 9.0.17]"
             },
             {
               "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[9.0.13, 9.0.13]"
+              "version": "[9.0.17, 9.0.17]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[9.0.13, 9.0.13]"
+              "version": "[9.0.17, 9.0.17]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[9.0.13, 9.0.13]"
+              "version": "[9.0.17, 9.0.17]"
             }
           ],
           "frameworkReferences": {
@@ -112,7 +110,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
