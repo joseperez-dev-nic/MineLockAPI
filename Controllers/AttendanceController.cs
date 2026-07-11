@@ -22,7 +22,7 @@ namespace RampaSegura.Api.Controllers
         public async Task<ActionResult<object>> OpenSession([FromBody] SessionOpenRequest request)
         {
             var entryTime = UnixTimestampConverter.UnixTimestampAFecha(request.EntryTime!.Value);
-            await _repository.OpenSessionAsync(request.PersonId!.Value, request.LevelId!.Value, entryTime);
+            await _repository.OpenSessionAsync(request.PersonId!.Value, request.LevelId!.Value, entryTime, request.UtcOffsetSeconds!.Value);
             return Ok(new { status = "OK" });
         }
 
@@ -30,7 +30,7 @@ namespace RampaSegura.Api.Controllers
         public async Task<ActionResult<object>> CloseSession([FromBody] SessionCloseRequest request)
         {
             var exitTime = UnixTimestampConverter.UnixTimestampAFecha(request.ExitTime!.Value);
-            await _repository.CloseSessionAsync(request.PersonId!.Value, exitTime);
+            await _repository.CloseSessionAsync(request.PersonId!.Value, exitTime, request.UtcOffsetSeconds!.Value);
             return Ok(new { status = "OK" });
         }
  
