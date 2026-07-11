@@ -9,9 +9,8 @@ namespace RampaSegura.Api.Common
     public static class UnixTimestampConverter
     {
         public static DateTime UnixTimestampAFecha(long fechaHora)
-        {
-            var utc = DateTime.UnixEpoch.AddMilliseconds(fechaHora); 
-            return utc.AddHours(-6);
+        { 
+            return DateTime.UnixEpoch.AddMilliseconds(fechaHora); 
         }
     }
 }
