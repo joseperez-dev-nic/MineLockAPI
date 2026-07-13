@@ -56,6 +56,7 @@ builder.Services.AddScoped<SyncLogSyncRepository>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<PersonRepository>();
 builder.Services.AddScoped<MineRepository>();
+builder.Services.AddScoped<AlertSettingRepository>();
 builder.Services.AddHostedService<PersonSyncBackgroundService>();
 
 // Log de errores compartido (SQL Server, db_errors_log -- pa_registrar_error)
