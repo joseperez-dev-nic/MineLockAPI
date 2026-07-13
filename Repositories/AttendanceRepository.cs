@@ -19,15 +19,16 @@ namespace RampaSegura.Api.Repositories
         }
 
         /// <summary>
-        /// sp_session_open(p_person_id, p_level_id, p_entry_time).
-        /// Señaliza SQLSTATE '45000' con PERSON_NOT_FOUND, LEVEL_NOT_FOUND o
-        /// ALREADY_INSIDE si la coherencia falla. Ese texto queda en ex.Message.
+        /// sp_session_open(p_person_id, p_level_id, p_entry_time, p_utc_offset_seconds).
+        /// El offset (segundos) lo manda el cliente y se usa como zona horaria.
+        /// Señaliza SQLSTATE '45000' con PERSON_NOT_FOUND, LEVEL_NOT_FOUND,
+        /// ALREADY_INSIDE o TIMEZONE_NOT_FOUND si la coherencia falla. Ese texto queda en ex.Message.
         /// Usa ExecuteNonQueryAsync en vez de leer el SELECT final: el controller
         /// no usa el detalle de la sesión, solo le importa si tuvo éxito o no,
         /// así que no hace falta parsear columnas ni lidiar con los result sets
         /// que agrega la llamada anidada a sp_person_sync_from_ncheck.
         /// </summary>
-        public async Task OpenSessionAsync(long personId, int levelId, DateTime? entryTime)
+        public async Task OpenSessionAsync(long personId, int levelId, DateTime? entryTime, long utcOffsetSeconds)
         {
             try
             {
@@ -37,6 +38,7 @@ namespace RampaSegura.Api.Repositories
                 cmd.Parameters.AddWithValue("p_person_id", personId);
                 cmd.Parameters.AddWithValue("p_level_id", levelId);
                 cmd.Parameters.AddWithValue("p_entry_time", entryTime);
+                cmd.Parameters.AddWithValue("p_utc_offset_seconds", utcOffsetSeconds);
 
                 await cnn.OpenAsync();
                 await cmd.ExecuteNonQueryAsync();
@@ -48,10 +50,11 @@ namespace RampaSegura.Api.Repositories
         }
         
         /// <summary>
-        /// sp_session_close(p_person_id, p_exit_time).
-        /// Señaliza PERSON_NOT_FOUND o NOT_INSIDE si la coherencia falla.
+        /// sp_session_close(p_person_id, p_exit_time, p_utc_offset_seconds).
+        /// El offset (segundos) lo manda el cliente y se usa como zona horaria.
+        /// Señaliza PERSON_NOT_FOUND, NOT_INSIDE o TIMEZONE_NOT_FOUND si la coherencia falla.
         /// </summary>
-        public async Task CloseSessionAsync(long personId, DateTime? exitTime)
+        public async Task CloseSessionAsync(long personId, DateTime? exitTime, long utcOffsetSeconds)
         {
             try
             {
@@ -60,6 +63,7 @@ namespace RampaSegura.Api.Repositories
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("p_person_id", personId);
                 cmd.Parameters.AddWithValue("p_exit_time", exitTime);
+                cmd.Parameters.AddWithValue("p_utc_offset_seconds", utcOffsetSeconds);
 
                 await cnn.OpenAsync();
                 await cmd.ExecuteNonQueryAsync();

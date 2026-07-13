@@ -12,5 +12,8 @@ namespace RampaSegura.Api.Models.Requests
 
         [Required(ErrorMessage = "ENTRY_TIME_REQUIRED")]
         public long? EntryTime { get; set; }
+
+        [Required(ErrorMessage = "UTC_OFFSET_REQUIRED")]
+        public long? UtcOffsetSeconds { get; set; }
     }
 }
