@@ -3,8 +3,9 @@ using System;
 namespace RampaSegura.Api.Models
 {
     /// <summary>
-    /// Coincide con sp_warning_report: sesiones (abiertas o cerradas) que superaron
-    /// las 8 horas (480 min) dentro de la mina.
+    /// Coincide con sp_warning_report: sesiones cerradas que superaron el límite de
+    /// advertencia. Los límites salen de alert_threshold_setting (warn_limit_hours /
+    /// turn_limit_hours), no están fijos en el SP.
     /// </summary>
     public class WarningReportItem
     {
@@ -18,5 +19,11 @@ namespace RampaSegura.Api.Models
         public DateTime? ExitTime { get; set; }
         public int MinutosDentro { get; set; }
         public string Estado { get; set; } = string.Empty;
+
+        /// <summary>
+        /// "Turno excedido" si superó turn_limit_hours, "Advertencia" si superó
+        /// warn_limit_hours. Lo calcula el SP contra alert_threshold_setting.
+        /// </summary>
+        public string? NivelAlerta { get; set; }
     }
 }

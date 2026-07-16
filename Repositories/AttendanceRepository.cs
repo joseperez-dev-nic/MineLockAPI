@@ -160,9 +160,10 @@ namespace RampaSegura.Api.Repositories
         }
 
         /// <summary>
-        /// sp_warning_report(p_fecha_desde, p_fecha_hasta) -- sesiones (abiertas o
-        /// cerradas) que superaron 480 min dentro de la mina. Ambas fechas son
-        /// opcionales: el SP las ignora si vienen NULL.
+        /// sp_warning_report(p_fecha_desde, p_fecha_hasta) -- sesiones ya cerradas que
+        /// superaron el límite de advertencia. Los límites (warn/turno) los lee el SP de
+        /// alert_threshold_setting y devuelve nivel_alerta. Ambas fechas son opcionales:
+        /// el SP las ignora si vienen NULL.
         /// </summary>
         public async Task<List<WarningReportItem>> GetWarningReportAsync(DateOnly? fechaDesde, DateOnly? fechaHasta)
         {
@@ -191,7 +192,8 @@ namespace RampaSegura.Api.Repositories
                         EntryTime = reader.GetDateTime("entry_time"),
                         ExitTime = reader.IsDBNull(reader.GetOrdinal("exit_time")) ? null : reader.GetDateTime("exit_time"),
                         MinutosDentro = reader.GetInt32("minutos_dentro"),
-                        Estado = reader.GetString("estado")
+                        Estado = reader.GetString("estado"),
+                        NivelAlerta = reader.IsDBNull(reader.GetOrdinal("nivel_alerta")) ? null : reader.GetString("nivel_alerta")
                     });
                 }
                 return result;
