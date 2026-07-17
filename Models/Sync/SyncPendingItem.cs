@@ -1,6 +1,6 @@
 using System;
 
-namespace RampaSegura.Api.Models
+namespace RampaSegura.Api.Models.Sync
 {
     /// <summary>
     /// Fila de attendance_session pendiente de sincronizar (is_synced = 0).
@@ -18,7 +18,19 @@ namespace RampaSegura.Api.Models
         public int? LevelId { get; set; }
         public DateTime EntryTime { get; set; }
         public DateTime? ExitTime { get; set; }
+
+        /// <summary>Offset en segundos de la entrada. Se sincroniza: la nube lo necesita
+        /// para recalcular la columna generada entry_time_utc.</summary>
+        public long? TimeZone { get; set; }
+
+        /// <summary>Offset en segundos de la salida. Se sincroniza: la nube lo necesita
+        /// para recalcular la columna generada exit_time_utc.</summary>
+        public long? ExitTimeZone { get; set; }
+
+        /// <summary>Columna GENERADA en la base. Se lee pero NO se envía a la nube
+        /// (MySQL prohíbe escribir columnas generadas); allá se recalcula sola.</summary>
         public TimeSpan? TimeInside { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

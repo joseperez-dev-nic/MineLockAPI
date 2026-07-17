@@ -11,19 +11,17 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Repositories
 {
     /// <summary>
-    /// Sincronización de la tabla person: LOCAL -> NUBE.
-    /// Como person no tiene is_synced, se envía el catálogo completo (upsert por
-    /// person_id) en cada llamada. El flujo del ciclo es:
-    ///   1) GetSourceLocalAsync -> lee todas las personas en local
-    ///   2) PushToCloudAsync    -> upsert de cada persona en la nube (transacción)
-    /// No hay paso de "marcar sincronizado" porque no hay flag.
+    /// Sincronización de app_user: LOCAL -> NUBE.
+    /// Sin is_synced: se hace upsert de todos los usuarios (por user_id) en cada llamada.
+    /// OJO: el login corre contra la NUBE, así que allá last_login_at es más fresco que
+    /// en local. Por eso sp_appuser_sync_upsert NO pisa last_login_at al actualizar.
     /// </summary>
-    public class PersonSyncRepository
+    public class AppUserSyncRepository
     {
         private readonly IRampaSeguraLocalConnectionFactory _local;
         private readonly IRampaSeguraCloudConnectionFactory _cloud;
 
-        public PersonSyncRepository(
+        public AppUserSyncRepository(
             IRampaSeguraLocalConnectionFactory local,
             IRampaSeguraCloudConnectionFactory cloud)
         {
@@ -32,14 +30,14 @@ namespace RampaSegura.Api.Repositories
         }
 
         /// <summary>
-        /// sp_person_sync_source() -- todas las personas del catálogo local.
+        /// sp_appuser_sync_source() -- todos los usuarios en local.
         /// </summary>
-        public async Task<List<PersonSyncItem>> GetSourceLocalAsync(CancellationToken ct = default)
+        public async Task<List<AppUserSyncItem>> GetSourceLocalAsync(CancellationToken ct = default)
         {
             try
             {
                 using var cnn = _local.CreateConnection();
-                using var cmd = new MySqlCommand("sp_person_sync_source", cnn)
+                using var cmd = new MySqlCommand("sp_appuser_sync_source", cnn)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
@@ -47,32 +45,35 @@ namespace RampaSegura.Api.Repositories
                 await cnn.OpenAsync(ct);
                 using var reader = await cmd.ExecuteReaderAsync(ct);
 
-                var result = new List<PersonSyncItem>();
+                var result = new List<AppUserSyncItem>();
                 while (await reader.ReadAsync(ct))
                 {
-                    result.Add(new PersonSyncItem
+                    result.Add(new AppUserSyncItem
                     {
-                        PersonId = reader.GetInt64("person_id"),
-                        EmployeeCode = reader.GetString("employee_code"),
-                        FirstName = reader.GetString("first_name"),
-                        LastName = reader.GetString("last_name"),
-                        JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
-                        Department = reader.IsDBNull(reader.GetOrdinal("department")) ? null : reader.GetString("department"),
-                        IsActive = reader.GetBoolean("is_active")
+                        UserId = reader.GetInt64("user_id"),
+                        Username = reader.GetString("username"),
+                        EmployeeCode = reader.IsDBNull(reader.GetOrdinal("employee_code")) ? null : reader.GetString("employee_code"),
+                        PasswordHash = reader.GetString("password_hash"),
+                        FullName = reader.IsDBNull(reader.GetOrdinal("full_name")) ? null : reader.GetString("full_name"),
+                        Email = reader.IsDBNull(reader.GetOrdinal("email")) ? null : reader.GetString("email"),
+                        IsActive = reader.GetBoolean("is_active"),
+                        LastLoginAt = reader.IsDBNull(reader.GetOrdinal("last_login_at")) ? null : reader.GetDateTime("last_login_at"),
+                        CreatedAt = reader.GetDateTime("created_at"),
+                        UpdatedAt = reader.GetDateTime("updated_at")
                     });
                 }
                 return result;
             }
             catch (MySqlException ex)
             {
-                throw new DataAccessException((int)ex.Number, "Error al leer el catálogo de personas en la base local", ex);
+                throw new DataAccessException((int)ex.Number, "Error al leer los usuarios en la base local", ex);
             }
         }
 
         /// <summary>
-        /// Upsert de cada persona en la NUBE (sp_person_sync_upsert), en una transacción.
+        /// Upsert de cada usuario en la NUBE (sp_appuser_sync_upsert), en transacción.
         /// </summary>
-        public async Task PushToCloudAsync(IReadOnlyList<PersonSyncItem> items, CancellationToken ct = default)
+        public async Task PushToCloudAsync(IReadOnlyList<AppUserSyncItem> items, CancellationToken ct = default)
         {
             if (items.Count == 0) return;
 
@@ -84,17 +85,20 @@ namespace RampaSegura.Api.Repositories
 
                 foreach (var item in items)
                 {
-                    using var cmd = new MySqlCommand("sp_person_sync_upsert", cnn, tx)
+                    using var cmd = new MySqlCommand("sp_appuser_sync_upsert", cnn, tx)
                     {
                         CommandType = CommandType.StoredProcedure
                     };
-                    cmd.Parameters.AddWithValue("p_person_id", item.PersonId);
-                    cmd.Parameters.AddWithValue("p_employee_code", item.EmployeeCode);
-                    cmd.Parameters.AddWithValue("p_first_name", item.FirstName);
-                    cmd.Parameters.AddWithValue("p_last_name", item.LastName);
-                    cmd.Parameters.AddWithValue("p_job_position", (object?)item.JobPosition ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("p_department", (object?)item.Department ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_user_id", item.UserId);
+                    cmd.Parameters.AddWithValue("p_username", item.Username);
+                    cmd.Parameters.AddWithValue("p_employee_code", (object?)item.EmployeeCode ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_password_hash", item.PasswordHash);
+                    cmd.Parameters.AddWithValue("p_full_name", (object?)item.FullName ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_email", (object?)item.Email ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("p_is_active", item.IsActive ? 1 : 0);
+                    cmd.Parameters.AddWithValue("p_last_login_at", (object?)item.LastLoginAt ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_created_at", item.CreatedAt);
+                    cmd.Parameters.AddWithValue("p_updated_at", item.UpdatedAt);
 
                     await cmd.ExecuteNonQueryAsync(ct);
                 }
@@ -103,13 +107,12 @@ namespace RampaSegura.Api.Repositories
             }
             catch (MySqlException ex)
             {
-                throw new DataAccessException((int)ex.Number, "Error al enviar las personas a la nube", ex);
+                throw new DataAccessException((int)ex.Number, "Error al enviar los usuarios a la nube", ex);
             }
         }
 
         /// <summary>
         /// sp_sync_log_write(p_status, p_sync_type, p_rows_sent, p_error) en la base LOCAL.
-        /// Reutiliza el mismo procedimiento que attendance; solo cambia el sync_type.
         /// </summary>
         public async Task WriteSyncLogLocalAsync(string status, string syncType, int rowsSent, string? errorMessage, CancellationToken ct = default)
         {

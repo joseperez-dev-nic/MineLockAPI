@@ -11,19 +11,17 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Repositories
 {
     /// <summary>
-    /// Sincronización de la tabla person: LOCAL -> NUBE.
-    /// Como person no tiene is_synced, se envía el catálogo completo (upsert por
-    /// person_id) en cada llamada. El flujo del ciclo es:
-    ///   1) GetSourceLocalAsync -> lee todas las personas en local
-    ///   2) PushToCloudAsync    -> upsert de cada persona en la nube (transacción)
-    /// No hay paso de "marcar sincronizado" porque no hay flag.
+    /// Sincronización de alert_threshold_setting: LOCAL -> NUBE.
+    /// Tabla mínima sin is_synced: se hace upsert de todas las filas (por setting_id)
+    /// en cada llamada. La nube necesita estos límites porque sp_warning_report
+    /// (que corre allá) los lee para calcular nivel_alerta.
     /// </summary>
-    public class PersonSyncRepository
+    public class AlertThresholdSyncRepository
     {
         private readonly IRampaSeguraLocalConnectionFactory _local;
         private readonly IRampaSeguraCloudConnectionFactory _cloud;
 
-        public PersonSyncRepository(
+        public AlertThresholdSyncRepository(
             IRampaSeguraLocalConnectionFactory local,
             IRampaSeguraCloudConnectionFactory cloud)
         {
@@ -32,14 +30,14 @@ namespace RampaSegura.Api.Repositories
         }
 
         /// <summary>
-        /// sp_person_sync_source() -- todas las personas del catálogo local.
+        /// sp_alertthreshold_sync_source() -- todos los límites configurados en local.
         /// </summary>
-        public async Task<List<PersonSyncItem>> GetSourceLocalAsync(CancellationToken ct = default)
+        public async Task<List<AlertThresholdSyncItem>> GetSourceLocalAsync(CancellationToken ct = default)
         {
             try
             {
                 using var cnn = _local.CreateConnection();
-                using var cmd = new MySqlCommand("sp_person_sync_source", cnn)
+                using var cmd = new MySqlCommand("sp_alertthreshold_sync_source", cnn)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
@@ -47,32 +45,32 @@ namespace RampaSegura.Api.Repositories
                 await cnn.OpenAsync(ct);
                 using var reader = await cmd.ExecuteReaderAsync(ct);
 
-                var result = new List<PersonSyncItem>();
+                var result = new List<AlertThresholdSyncItem>();
                 while (await reader.ReadAsync(ct))
                 {
-                    result.Add(new PersonSyncItem
+                    result.Add(new AlertThresholdSyncItem
                     {
-                        PersonId = reader.GetInt64("person_id"),
-                        EmployeeCode = reader.GetString("employee_code"),
-                        FirstName = reader.GetString("first_name"),
-                        LastName = reader.GetString("last_name"),
-                        JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
-                        Department = reader.IsDBNull(reader.GetOrdinal("department")) ? null : reader.GetString("department"),
-                        IsActive = reader.GetBoolean("is_active")
+                        // setting_id es TINYINT UNSIGNED: se lee con GetValue + Convert
+                        // para no depender de cómo lo mapee el driver (byte/sbyte).
+                        SettingId = Convert.ToInt32(reader.GetValue(reader.GetOrdinal("setting_id"))),
+                        WarnLimitHours = reader.IsDBNull(reader.GetOrdinal("warn_limit_hours")) ? null : reader.GetDecimal("warn_limit_hours"),
+                        TurnLimitHours = reader.IsDBNull(reader.GetOrdinal("turn_limit_hours")) ? null : reader.GetDecimal("turn_limit_hours"),
+                        UpdatedByUserId = reader.IsDBNull(reader.GetOrdinal("updated_by_user_id")) ? null : reader.GetInt64("updated_by_user_id"),
+                        UpdatedAt = reader.IsDBNull(reader.GetOrdinal("updated_at")) ? null : reader.GetDateTime("updated_at")
                     });
                 }
                 return result;
             }
             catch (MySqlException ex)
             {
-                throw new DataAccessException((int)ex.Number, "Error al leer el catálogo de personas en la base local", ex);
+                throw new DataAccessException((int)ex.Number, "Error al leer los límites de alerta en la base local", ex);
             }
         }
 
         /// <summary>
-        /// Upsert de cada persona en la NUBE (sp_person_sync_upsert), en una transacción.
+        /// Upsert de cada límite en la NUBE (sp_alertthreshold_sync_upsert), en transacción.
         /// </summary>
-        public async Task PushToCloudAsync(IReadOnlyList<PersonSyncItem> items, CancellationToken ct = default)
+        public async Task PushToCloudAsync(IReadOnlyList<AlertThresholdSyncItem> items, CancellationToken ct = default)
         {
             if (items.Count == 0) return;
 
@@ -84,17 +82,15 @@ namespace RampaSegura.Api.Repositories
 
                 foreach (var item in items)
                 {
-                    using var cmd = new MySqlCommand("sp_person_sync_upsert", cnn, tx)
+                    using var cmd = new MySqlCommand("sp_alertthreshold_sync_upsert", cnn, tx)
                     {
                         CommandType = CommandType.StoredProcedure
                     };
-                    cmd.Parameters.AddWithValue("p_person_id", item.PersonId);
-                    cmd.Parameters.AddWithValue("p_employee_code", item.EmployeeCode);
-                    cmd.Parameters.AddWithValue("p_first_name", item.FirstName);
-                    cmd.Parameters.AddWithValue("p_last_name", item.LastName);
-                    cmd.Parameters.AddWithValue("p_job_position", (object?)item.JobPosition ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("p_department", (object?)item.Department ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("p_is_active", item.IsActive ? 1 : 0);
+                    cmd.Parameters.AddWithValue("p_setting_id", item.SettingId);
+                    cmd.Parameters.AddWithValue("p_warn_limit_hours", (object?)item.WarnLimitHours ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_turn_limit_hours", (object?)item.TurnLimitHours ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_updated_by_user_id", (object?)item.UpdatedByUserId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_updated_at", (object?)item.UpdatedAt ?? DBNull.Value);
 
                     await cmd.ExecuteNonQueryAsync(ct);
                 }
@@ -103,13 +99,12 @@ namespace RampaSegura.Api.Repositories
             }
             catch (MySqlException ex)
             {
-                throw new DataAccessException((int)ex.Number, "Error al enviar las personas a la nube", ex);
+                throw new DataAccessException((int)ex.Number, "Error al enviar los límites de alerta a la nube", ex);
             }
         }
 
         /// <summary>
         /// sp_sync_log_write(p_status, p_sync_type, p_rows_sent, p_error) en la base LOCAL.
-        /// Reutiliza el mismo procedimiento que attendance; solo cambia el sync_type.
         /// </summary>
         public async Task WriteSyncLogLocalAsync(string status, string syncType, int rowsSent, string? errorMessage, CancellationToken ct = default)
         {

@@ -74,9 +74,10 @@ Ciclo incremental (attendance/photo): leer `is_synced=0` → upsert a nube (tran
 → marcar `is_synced=1` SOLO lo enviado (SP protege carrera: `updated_at <= @leido`).
 Ciclo full (person/synclog): leer todo → upsert por PK.
 
-## 7. Procedimientos SQL (archivos en la raíz del repo)
+## 7. Procedimientos SQL (carpeta `Database/`)
 
-`sp_attendance_sync.sql`, `sp_person_sync.sql`, `sp_photo_sync.sql`, `sp_synclog_sync.sql`.
+Los del sync están en **`Database/Sync/`**: `sp_attendance_sync.sql`, `sp_person_sync.sql`,
+`sp_photo_sync.sql`, `sp_synclog_sync.sql`. Los demás SP del negocio, en `Database/`.
 
 - Cada archivo marca `[LOCAL]` (crear en localhost) y `[NUBE]` (crear en 185.225.232.107).
   El usuario los crea en **ambas** bases como respaldo.

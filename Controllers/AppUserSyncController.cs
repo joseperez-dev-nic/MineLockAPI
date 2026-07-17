@@ -11,24 +11,23 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Controllers
 {
     /// <summary>
-    /// Sincronización de person_photo LOCAL -> NUBE, bajo demanda (incremental).
-    /// Solo envía fotos con is_synced = 0 y las marca is_synced = 1 tras subirlas.
-    /// Como las fotos referencian a person, conviene llamar primero /api/personsync/execute.
+    /// Sincronización de app_user LOCAL -> NUBE, bajo demanda.
+    /// Envía todos los usuarios (upsert por user_id).
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class PhotoSyncController : ControllerBase
+    public class AppUserSyncController : ControllerBase
     {
-        private const string SyncType = "PHOTO";
+        private const string SyncType = "APP_USER";
 
-        private readonly PhotoSyncRepository _repository;
+        private readonly AppUserSyncRepository _repository;
         private readonly ErrorLogRepository _errorLog;
-        private readonly ILogger<PhotoSyncController> _logger;
+        private readonly ILogger<AppUserSyncController> _logger;
 
-        public PhotoSyncController(
-            PhotoSyncRepository repository,
+        public AppUserSyncController(
+            AppUserSyncRepository repository,
             ErrorLogRepository errorLog,
-            ILogger<PhotoSyncController> logger)
+            ILogger<AppUserSyncController> logger)
         {
             _repository = repository;
             _errorLog = errorLog;
@@ -36,40 +35,38 @@ namespace RampaSegura.Api.Controllers
         }
 
         /// <summary>
-        /// POST /api/photosync/execute
-        /// 1) Lee fotos pendientes (is_synced = 0) de la base local.
-        /// 2) Las envía (upsert) a la nube.
-        /// 3) Marca is_synced = 1 en local solo de lo enviado.
-        /// 4) Registra el resultado en sync_log (local).
+        /// POST /api/appusersync/execute
+        /// 1) Lee todos los usuarios de la base local.
+        /// 2) Los envía (upsert) a la nube.
+        /// 3) Registra el resultado en sync_log (local).
         /// </summary>
         [HttpPost("execute")]
         public async Task<ActionResult<SyncResult>> Execute(CancellationToken ct)
         {
             try
             {
-                var fotos = await _repository.GetPendingLocalAsync(ct);
+                var usuarios = await _repository.GetSourceLocalAsync(ct);
 
-                if (fotos.Count == 0)
+                if (usuarios.Count == 0)
                 {
                     return Ok(new SyncResult
                     {
                         Status = "SUCCESS",
                         RowsSent = 0,
-                        Message = "No hay fotos pendientes de sincronizar."
+                        Message = "No hay usuarios para sincronizar."
                     });
                 }
 
-                await _repository.PushToCloudAsync(fotos, ct);
-                await _repository.MarkSyncedLocalAsync(fotos, ct);
-                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, fotos.Count, null, ct);
+                await _repository.PushToCloudAsync(usuarios, ct);
+                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, usuarios.Count, null, ct);
 
-                _logger.LogInformation("Sync photo -> nube OK (endpoint), filas={Rows}", fotos.Count);
+                _logger.LogInformation("Sync app_user -> nube OK (endpoint), filas={Rows}", usuarios.Count);
 
                 return Ok(new SyncResult
                 {
                     Status = "SUCCESS",
-                    RowsSent = fotos.Count,
-                    Message = $"{fotos.Count} foto(s) sincronizada(s) a la nube."
+                    RowsSent = usuarios.Count,
+                    Message = $"{usuarios.Count} usuario(s) sincronizado(s) a la nube."
                 });
             }
             catch (DataAccessException ex)
@@ -94,10 +91,10 @@ namespace RampaSegura.Api.Controllers
             var mensaje = prefijo + causa;
             if (mensaje.Length > 255) mensaje = mensaje.Substring(0, 255);
 
-            _logger.LogWarning("Sync photo -> nube FALLÓ (endpoint). {Mensaje}", causa);
+            _logger.LogWarning("Sync app_user -> nube FALLÓ (endpoint). {Mensaje}", causa);
 
             await _errorLog.RegisterAsync(
-                $"POST /api/photosync/execute [{SyncType}]",
+                $"POST /api/appusersync/execute [{SyncType}]",
                 StatusCodes.Status503ServiceUnavailable,
                 causa,
                 HttpContext.GetClientIp(),

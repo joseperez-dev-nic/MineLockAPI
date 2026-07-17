@@ -1,5 +1,5 @@
 using RampaSegura.Api.Common;
-using RampaSegura.Api.Models;
+using RampaSegura.Api.Models.Sync;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

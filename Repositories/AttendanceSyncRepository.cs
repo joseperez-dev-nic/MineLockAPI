@@ -1,6 +1,6 @@
 using RampaSegura.Api.Common;
 using RampaSegura.Api.Data;
-using RampaSegura.Api.Models;
+using RampaSegura.Api.Models.Sync;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
@@ -64,6 +64,8 @@ namespace RampaSegura.Api.Repositories
                         LevelId = reader.IsDBNull(reader.GetOrdinal("level_id")) ? null : reader.GetInt32("level_id"),
                         EntryTime = reader.GetDateTime("entry_time"),
                         ExitTime = reader.IsDBNull(reader.GetOrdinal("exit_time")) ? null : reader.GetDateTime("exit_time"),
+                        TimeZone = reader.IsDBNull(reader.GetOrdinal("time_zone")) ? null : reader.GetInt64("time_zone"),
+                        ExitTimeZone = reader.IsDBNull(reader.GetOrdinal("exit_time_zone")) ? null : reader.GetInt64("exit_time_zone"),
                         TimeInside = reader.IsDBNull(reader.GetOrdinal("time_inside")) ? null : reader.GetTimeSpan("time_inside"),
                         CreatedAt = reader.GetDateTime("created_at"),
                         UpdatedAt = reader.GetDateTime("updated_at")
@@ -108,6 +110,8 @@ namespace RampaSegura.Api.Repositories
                     cmd.Parameters.AddWithValue("p_level_id", (object?)item.LevelId ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("p_entry_time", item.EntryTime);
                     cmd.Parameters.AddWithValue("p_exit_time", (object?)item.ExitTime ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_time_zone", (object?)item.TimeZone ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_exit_time_zone", (object?)item.ExitTimeZone ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("p_created_at", item.CreatedAt);
                     cmd.Parameters.AddWithValue("p_updated_at", item.UpdatedAt);
 

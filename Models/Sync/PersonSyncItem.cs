@@ -1,4 +1,4 @@
-namespace RampaSegura.Api.Models
+namespace RampaSegura.Api.Models.Sync
 {
     /// <summary>
     /// Fila de la tabla person tal cual vive en la base LOCAL, para sincronizar

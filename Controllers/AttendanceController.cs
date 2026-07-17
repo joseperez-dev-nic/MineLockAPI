@@ -33,7 +33,7 @@ namespace RampaSegura.Api.Controllers
             await _repository.CloseSessionAsync(request.PersonId!.Value, exitTime, request.UtcOffsetSeconds!.Value);
             return Ok(new { status = "OK" });
         }
- 
+
         [HttpGet("dashboard")]
         public async Task<ActionResult<List<DashboardActiveItem>>> GetDashboard()
         {

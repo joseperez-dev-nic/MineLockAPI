@@ -53,6 +53,8 @@ builder.Services.AddScoped<AttendanceSyncRepository>();
 builder.Services.AddScoped<PersonSyncRepository>();
 builder.Services.AddScoped<PhotoSyncRepository>();
 builder.Services.AddScoped<SyncLogSyncRepository>();
+builder.Services.AddScoped<AlertThresholdSyncRepository>();
+builder.Services.AddScoped<AppUserSyncRepository>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<PersonRepository>();
 builder.Services.AddScoped<MineRepository>();

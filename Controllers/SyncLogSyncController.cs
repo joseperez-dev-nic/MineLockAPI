@@ -1,5 +1,5 @@
 using RampaSegura.Api.Common;
-using RampaSegura.Api.Models;
+using RampaSegura.Api.Models.Sync;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,9 +11,10 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Controllers
 {
     /// <summary>
-    /// Replica sync_log LOCAL -> NUBE, bajo demanda. Envía todas las filas
-    /// (upsert por sync_id). A diferencia de los otros syncs, este NO escribe
-    /// en sync_log (evita el "log del log"); los fallos solo van a la base de errores.
+    /// Replica las bitácoras LOCAL -> NUBE (sync_log + audit_log) en una sola llamada.
+    /// Envía todas las filas (upsert por sync_id / audit_id). A diferencia de los otros
+    /// syncs, este NO escribe en sync_log (evita el "log del log"); los fallos solo van
+    /// a la base de errores.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -37,7 +38,8 @@ namespace RampaSegura.Api.Controllers
 
         /// <summary>
         /// POST /api/synclogsync/execute
-        /// 1) Lee todas las filas de sync_log en local.
+        /// Sincroniza las dos tablas de bitácora en una sola llamada:
+        /// 1) Lee todas las filas de sync_log y de audit_log en local.
         /// 2) Las envía (upsert) a la nube.
         /// </summary>
         [HttpPost("execute")]
@@ -46,26 +48,31 @@ namespace RampaSegura.Api.Controllers
             try
             {
                 var filas = await _repository.GetSourceLocalAsync(ct);
+                var auditorias = await _repository.GetAuditSourceLocalAsync(ct);
 
-                if (filas.Count == 0)
+                if (filas.Count == 0 && auditorias.Count == 0)
                 {
                     return Ok(new SyncResult
                     {
                         Status = "SUCCESS",
                         RowsSent = 0,
-                        Message = "No hay registros de sync_log para sincronizar."
+                        Message = "No hay registros de sync_log ni audit_log para sincronizar."
                     });
                 }
 
                 await _repository.PushToCloudAsync(filas, ct);
+                await _repository.PushAuditToCloudAsync(auditorias, ct);
 
-                _logger.LogInformation("Sync sync_log -> nube OK (endpoint), filas={Rows}", filas.Count);
+                var total = filas.Count + auditorias.Count;
+                _logger.LogInformation(
+                    "Sync bitácoras -> nube OK (endpoint), sync_log={SyncRows}, audit_log={AuditRows}",
+                    filas.Count, auditorias.Count);
 
                 return Ok(new SyncResult
                 {
                     Status = "SUCCESS",
-                    RowsSent = filas.Count,
-                    Message = $"{filas.Count} registro(s) de sync_log sincronizado(s) a la nube."
+                    RowsSent = total,
+                    Message = $"{filas.Count} registro(s) de sync_log y {auditorias.Count} de audit_log sincronizado(s) a la nube."
                 });
             }
             catch (DataAccessException ex)

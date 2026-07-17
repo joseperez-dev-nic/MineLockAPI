@@ -11,24 +11,24 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Controllers
 {
     /// <summary>
-    /// Sincronización de person_photo LOCAL -> NUBE, bajo demanda (incremental).
-    /// Solo envía fotos con is_synced = 0 y las marca is_synced = 1 tras subirlas.
-    /// Como las fotos referencian a person, conviene llamar primero /api/personsync/execute.
+    /// Sincronización de alert_threshold_setting LOCAL -> NUBE, bajo demanda.
+    /// Envía todos los límites (upsert por setting_id). La nube los necesita porque
+    /// sp_warning_report corre allá y los lee para calcular nivel_alerta.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class PhotoSyncController : ControllerBase
+    public class AlertThresholdSyncController : ControllerBase
     {
-        private const string SyncType = "PHOTO";
+        private const string SyncType = "ALERT_THRESHOLD";
 
-        private readonly PhotoSyncRepository _repository;
+        private readonly AlertThresholdSyncRepository _repository;
         private readonly ErrorLogRepository _errorLog;
-        private readonly ILogger<PhotoSyncController> _logger;
+        private readonly ILogger<AlertThresholdSyncController> _logger;
 
-        public PhotoSyncController(
-            PhotoSyncRepository repository,
+        public AlertThresholdSyncController(
+            AlertThresholdSyncRepository repository,
             ErrorLogRepository errorLog,
-            ILogger<PhotoSyncController> logger)
+            ILogger<AlertThresholdSyncController> logger)
         {
             _repository = repository;
             _errorLog = errorLog;
@@ -36,40 +36,38 @@ namespace RampaSegura.Api.Controllers
         }
 
         /// <summary>
-        /// POST /api/photosync/execute
-        /// 1) Lee fotos pendientes (is_synced = 0) de la base local.
-        /// 2) Las envía (upsert) a la nube.
-        /// 3) Marca is_synced = 1 en local solo de lo enviado.
-        /// 4) Registra el resultado en sync_log (local).
+        /// POST /api/alertthresholdsync/execute
+        /// 1) Lee los límites de alerta de la base local.
+        /// 2) Los envía (upsert) a la nube.
+        /// 3) Registra el resultado en sync_log (local).
         /// </summary>
         [HttpPost("execute")]
         public async Task<ActionResult<SyncResult>> Execute(CancellationToken ct)
         {
             try
             {
-                var fotos = await _repository.GetPendingLocalAsync(ct);
+                var limites = await _repository.GetSourceLocalAsync(ct);
 
-                if (fotos.Count == 0)
+                if (limites.Count == 0)
                 {
                     return Ok(new SyncResult
                     {
                         Status = "SUCCESS",
                         RowsSent = 0,
-                        Message = "No hay fotos pendientes de sincronizar."
+                        Message = "No hay límites de alerta para sincronizar."
                     });
                 }
 
-                await _repository.PushToCloudAsync(fotos, ct);
-                await _repository.MarkSyncedLocalAsync(fotos, ct);
-                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, fotos.Count, null, ct);
+                await _repository.PushToCloudAsync(limites, ct);
+                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, limites.Count, null, ct);
 
-                _logger.LogInformation("Sync photo -> nube OK (endpoint), filas={Rows}", fotos.Count);
+                _logger.LogInformation("Sync alert_threshold_setting -> nube OK (endpoint), filas={Rows}", limites.Count);
 
                 return Ok(new SyncResult
                 {
                     Status = "SUCCESS",
-                    RowsSent = fotos.Count,
-                    Message = $"{fotos.Count} foto(s) sincronizada(s) a la nube."
+                    RowsSent = limites.Count,
+                    Message = $"{limites.Count} límite(s) de alerta sincronizado(s) a la nube."
                 });
             }
             catch (DataAccessException ex)
@@ -94,10 +92,10 @@ namespace RampaSegura.Api.Controllers
             var mensaje = prefijo + causa;
             if (mensaje.Length > 255) mensaje = mensaje.Substring(0, 255);
 
-            _logger.LogWarning("Sync photo -> nube FALLÓ (endpoint). {Mensaje}", causa);
+            _logger.LogWarning("Sync alert_threshold_setting -> nube FALLÓ (endpoint). {Mensaje}", causa);
 
             await _errorLog.RegisterAsync(
-                $"POST /api/photosync/execute [{SyncType}]",
+                $"POST /api/alertthresholdsync/execute [{SyncType}]",
                 StatusCodes.Status503ServiceUnavailable,
                 causa,
                 HttpContext.GetClientIp(),

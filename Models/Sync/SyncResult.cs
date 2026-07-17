@@ -1,4 +1,4 @@
-namespace RampaSegura.Api.Models
+namespace RampaSegura.Api.Models.Sync
 {
     /// <summary>
     /// Resultado de un ciclo de sincronización disparado por el endpoint.

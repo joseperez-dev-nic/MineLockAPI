@@ -1,6 +1,6 @@
 using System;
 
-namespace RampaSegura.Api.Models
+namespace RampaSegura.Api.Models.Sync
 {
     /// <summary>
     /// Fila de sync_log para replicar a la nube. sync_log no tiene is_synced, así

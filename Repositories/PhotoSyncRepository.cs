@@ -1,6 +1,6 @@
 using RampaSegura.Api.Common;
 using RampaSegura.Api.Data;
-using RampaSegura.Api.Models;
+using RampaSegura.Api.Models.Sync;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;

@@ -29,7 +29,8 @@ DELIMITER //
 CREATE PROCEDURE sp_attendance_sync_pending()
 BEGIN
     SELECT session_id, person_id, employee_code, full_name, job_position,
-           department, level_id, entry_time, exit_time, time_inside,
+           department, level_id, entry_time, exit_time,
+           time_zone, exit_time_zone, time_inside,
            created_at, updated_at
     FROM attendance_session
     WHERE is_synced = 0
@@ -41,45 +42,53 @@ DELIMITER ;
 -- [NUBE] Upsert de una fila de attendance_session en la nube.
 -- Se usa el mismo session_id que en local (PK) para mantener el espejo.
 -- Si la fila ya existe (p. ej. se abrió y luego se cerró), se actualiza.
--- OJO: time_inside es una COLUMNA GENERADA (se calcula sola a partir de
--- entry_time/exit_time), por eso NO se inserta ni actualiza: MySQL lo prohíbe.
+-- OJO COLUMNAS GENERADAS: time_inside, entry_time_utc y exit_time_utc son
+-- STORED GENERATED. NO se insertan ni actualizan (MySQL lo prohíbe): la nube
+-- las recalcula sola a partir de entry_time/exit_time + time_zone/exit_time_zone.
+-- Por eso SÍ es indispensable sincronizar time_zone y exit_time_zone.
 -- ---------------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_attendance_sync_upsert;
 DELIMITER //
 CREATE PROCEDURE sp_attendance_sync_upsert(
-    IN p_session_id   BIGINT UNSIGNED,
-    IN p_person_id    BIGINT UNSIGNED,
-    IN p_employee_code VARCHAR(30),
-    IN p_full_name    VARCHAR(60),
-    IN p_job_position VARCHAR(60),
-    IN p_department   VARCHAR(60),
-    IN p_level_id     INT UNSIGNED,
-    IN p_entry_time   DATETIME,
-    IN p_exit_time    DATETIME,
-    IN p_created_at   DATETIME,
-    IN p_updated_at   DATETIME
+    IN p_session_id     BIGINT UNSIGNED,
+    IN p_person_id      BIGINT UNSIGNED,
+    IN p_employee_code  VARCHAR(30),
+    IN p_full_name      VARCHAR(60),
+    IN p_job_position   VARCHAR(60),
+    IN p_department     VARCHAR(60),
+    IN p_level_id       INT UNSIGNED,
+    IN p_entry_time     DATETIME,
+    IN p_exit_time      DATETIME,
+    IN p_time_zone      BIGINT,
+    IN p_exit_time_zone BIGINT,
+    IN p_created_at     DATETIME,
+    IN p_updated_at     DATETIME
 )
 BEGIN
     INSERT INTO attendance_session
         (session_id, person_id, employee_code, full_name, job_position,
-         department, level_id, entry_time, exit_time, is_synced,
+         department, level_id, entry_time, exit_time,
+         time_zone, exit_time_zone, is_synced,
          created_at, updated_at)
     VALUES
         (p_session_id, p_person_id, p_employee_code, p_full_name, p_job_position,
-         p_department, p_level_id, p_entry_time, p_exit_time, 1,
+         p_department, p_level_id, p_entry_time, p_exit_time,
+         p_time_zone, p_exit_time_zone, 1,
          p_created_at, p_updated_at)
     ON DUPLICATE KEY UPDATE
-        person_id     = VALUES(person_id),
-        employee_code = VALUES(employee_code),
-        full_name     = VALUES(full_name),
-        job_position  = VALUES(job_position),
-        department    = VALUES(department),
-        level_id      = VALUES(level_id),
-        entry_time    = VALUES(entry_time),
-        exit_time     = VALUES(exit_time),
-        is_synced     = 1,
-        created_at    = VALUES(created_at),
-        updated_at    = VALUES(updated_at);
+        person_id      = VALUES(person_id),
+        employee_code  = VALUES(employee_code),
+        full_name      = VALUES(full_name),
+        job_position   = VALUES(job_position),
+        department     = VALUES(department),
+        level_id       = VALUES(level_id),
+        entry_time     = VALUES(entry_time),
+        exit_time      = VALUES(exit_time),
+        time_zone      = VALUES(time_zone),
+        exit_time_zone = VALUES(exit_time_zone),
+        is_synced      = 1,
+        created_at     = VALUES(created_at),
+        updated_at     = VALUES(updated_at);
 END //
 DELIMITER ;
 

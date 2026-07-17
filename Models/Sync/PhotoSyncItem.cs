@@ -1,6 +1,6 @@
 using System;
 
-namespace RampaSegura.Api.Models
+namespace RampaSegura.Api.Models.Sync
 {
     /// <summary>
     /// Fila de person_photo (la imagen va como bytes en photo_data / LONGBLOB).
