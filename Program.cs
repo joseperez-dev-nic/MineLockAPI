@@ -4,8 +4,12 @@ using RampaSegura.Api.Middleware;
 using RampaSegura.Api.Repositories;
 using RampaSegura.Api.Security;
 using RampaSegura.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.Linq;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +35,41 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// --- Autenticación JWT -------------------------------------------------
+// El login (/api/auth/login) emite el token; el resto de endpoints lo exigen
+// en el header "Authorization: Bearer {token}". La X-Api-Key sigue vigente
+// como capa aparte: protege que solo la app hable con la API.
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("No se encontró 'Jwt:Key' en la configuración.");
+
+builder.Services.AddSingleton<JwtTokenService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "RampaSeguraAPI",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "RampaSeguraApp",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            // Sin esto, un token expirado sigue siendo aceptado hasta 5 min.
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// Por defecto TODO exige token: es más seguro olvidarse de poner [Authorize]
+// que olvidarse de protegerlo. Lo público se marca con [AllowAnonymous].
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 const string FrontendCorsPolicy = "FrontendCors";
 builder.Services.AddCors(options =>
@@ -83,6 +122,9 @@ app.UseCors(FrontendCorsPolicy);
 app.UseDataAccessExceptionHandling();
 app.UseApiKeyAuth();
 
+// UseAuthentication debe ir antes de UseAuthorization: primero se resuelve
+// quién es el usuario (a partir del JWT), después si tiene permiso.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

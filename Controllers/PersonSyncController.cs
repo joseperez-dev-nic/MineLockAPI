@@ -1,7 +1,9 @@
 using RampaSegura.Api.Common;
+using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Sync;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,6 +17,7 @@ namespace RampaSegura.Api.Controllers
     /// Se llama desde el despliegue LOCAL de la API. Envía el catálogo completo
     /// de personas (upsert por person_id) porque person no tiene is_synced.
     /// </summary>
+    [Authorize(Roles = RoleCodes.Admin)]
     [ApiController]
     [Route("api/[controller]")]
     public class PersonSyncController : ControllerBase

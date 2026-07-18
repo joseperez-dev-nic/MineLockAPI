@@ -2,11 +2,19 @@ using RampaSegura.Api.Common;
 using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Requests;
 using RampaSegura.Api.Repositories;
-using Microsoft.AspNetCore.Mvc; 
-using System.ComponentModel.DataAnnotations; 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace RampaSegura.Api.Controllers
 {
+    /// <summary>
+    /// OJO con los roles aquí: es el único controlador mixto. El dashboard lo puede
+    /// ver también el VIEWER; todo lo demás (marcajes y reportes) es solo ADMIN.
+    /// No se pone [Authorize] a nivel de clase a propósito: los atributos se acumulan
+    /// (AND), así que un ADMIN a nivel de clase impediría el acceso del VIEWER al
+    /// dashboard aunque el método lo permitiera.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class AttendanceController : ControllerBase
@@ -18,6 +26,7 @@ namespace RampaSegura.Api.Controllers
             _repository = repository;
         }
 
+        [Authorize(Roles = RoleCodes.Admin)]
         [HttpPost("entry")]
         public async Task<ActionResult<object>> OpenSession([FromBody] SessionOpenRequest request)
         {
@@ -26,6 +35,7 @@ namespace RampaSegura.Api.Controllers
             return Ok(new { status = "OK" });
         }
 
+        [Authorize(Roles = RoleCodes.Admin)]
         [HttpPost("exit")]
         public async Task<ActionResult<object>> CloseSession([FromBody] SessionCloseRequest request)
         {
@@ -34,6 +44,7 @@ namespace RampaSegura.Api.Controllers
             return Ok(new { status = "OK" });
         }
 
+        [Authorize(Roles = RoleCodes.Admin + "," + RoleCodes.Viewer)]
         [HttpGet("dashboard")]
         public async Task<ActionResult<List<DashboardActiveItem>>> GetDashboard()
         {
@@ -42,6 +53,7 @@ namespace RampaSegura.Api.Controllers
         }
 
         /// GET /api/attendance/report?fechaDesde=2026-07-01&fechaHasta=2026-07-03
+        [Authorize(Roles = RoleCodes.Admin)]
         [HttpGet("report")]
         public async Task<ActionResult<List<SessionReportItem>>> GetReport(
             [FromQuery, Required(ErrorMessage = "FECHA_DESDE_REQUIRED")] DateOnly? fechaDesde,
@@ -58,6 +70,7 @@ namespace RampaSegura.Api.Controllers
 
         /// GET /api/attendance/warnings?fechaDesde=2026-07-01&fechaHasta=2026-07-03
         /// Ambas fechas son opcionales: si se omiten, trae advertencias de todo el histórico.
+        [Authorize(Roles = RoleCodes.Admin)]
         [HttpGet("warnings")]
         public async Task<ActionResult<List<WarningReportItem>>> GetWarnings(
             [FromQuery] DateOnly? fechaDesde,

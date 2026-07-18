@@ -1,6 +1,8 @@
 using RampaSegura.Api.Common;
 using RampaSegura.Api.Models.Requests;
 using RampaSegura.Api.Repositories;
+using RampaSegura.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -15,13 +17,24 @@ namespace RampaSegura.Api.Controllers
 
         private readonly UserRepository _repository;
         private readonly ErrorLogRepository _errorLogRepository;
+        private readonly JwtTokenService _tokenService;
 
-        public AuthController(UserRepository repository, ErrorLogRepository errorLogRepository)
+        public AuthController(
+            UserRepository repository,
+            ErrorLogRepository errorLogRepository,
+            JwtTokenService tokenService)
         {
             _repository = repository;
             _errorLogRepository = errorLogRepository;
+            _tokenService = tokenService;
         }
 
+        /// <summary>
+        /// POST /api/auth/login -- único endpoint sin JWT (por eso [AllowAnonymous]);
+        /// sigue exigiendo la X-Api-Key. Devuelve el token que el cliente debe mandar
+        /// después en el header "Authorization: Bearer {token}".
+        /// </summary>
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<object>> Login([FromBody] LoginRequest request)
         {
@@ -60,16 +73,21 @@ namespace RampaSegura.Api.Controllers
 
             await _repository.TouchLastLoginAsync(user.UserId);
 
+            var (token, expiresAtUtc) = _tokenService.Create(user);
+
             return Ok(new
             {
                 status = "OK",
+                token,
+                expiresAt = expiresAtUtc,
                 user = new
                 {
                     userId = user.UserId,
                     username = user.Username,
                     employeeCode = user.EmployeeCode,
                     fullName = user.FullName,
-                    email = user.Email
+                    email = user.Email,
+                    role = user.RoleCode
                 }
             });
         }

@@ -18,8 +18,11 @@
 -- tipos nuevos sin ALTER. Ejecutar en ambas bases.
 -- El IF NOT EXISTS evita error si ya se corrió antes (MySQL 8.0+).
 -- ---------------------------------------------------------------------
+-- OJO: MySQL 8 NO soporta "ADD COLUMN IF NOT EXISTS" (eso es de MariaDB).
+-- Si ya se aplicó, MySQL responde Error 1060 (Duplicate column name): es
+-- inofensivo, significa que la columna ya existe.
 ALTER TABLE sync_log
-    ADD COLUMN IF NOT EXISTS sync_type VARCHAR(20) NOT NULL DEFAULT 'ATTENDANCE' AFTER status;
+    ADD COLUMN sync_type VARCHAR(20) NOT NULL DEFAULT 'ATTENDANCE' AFTER status;
 
 -- ---------------------------------------------------------------------
 -- [LOCAL] Filas pendientes de sincronizar (fila completa, la nube es espejo)

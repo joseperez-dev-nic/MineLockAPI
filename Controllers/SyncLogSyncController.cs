@@ -1,7 +1,9 @@
 using RampaSegura.Api.Common;
+using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Sync;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -16,6 +18,7 @@ namespace RampaSegura.Api.Controllers
     /// syncs, este NO escribe en sync_log (evita el "log del log"); los fallos solo van
     /// a la base de errores.
     /// </summary>
+    [Authorize(Roles = RoleCodes.Admin)]
     [ApiController]
     [Route("api/[controller]")]
     public class SyncLogSyncController : ControllerBase

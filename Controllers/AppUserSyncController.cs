@@ -1,7 +1,9 @@
 using RampaSegura.Api.Common;
+using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Sync;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,6 +16,7 @@ namespace RampaSegura.Api.Controllers
     /// Sincronización de app_user LOCAL -> NUBE, bajo demanda.
     /// Envía todos los usuarios (upsert por user_id).
     /// </summary>
+    [Authorize(Roles = RoleCodes.Admin)]
     [ApiController]
     [Route("api/[controller]")]
     public class AppUserSyncController : ControllerBase

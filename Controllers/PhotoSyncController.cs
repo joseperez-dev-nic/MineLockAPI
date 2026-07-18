@@ -1,7 +1,9 @@
 using RampaSegura.Api.Common;
+using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Sync;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,6 +17,7 @@ namespace RampaSegura.Api.Controllers
     /// Solo envía fotos con is_synced = 0 y las marca is_synced = 1 tras subirlas.
     /// Como las fotos referencian a person, conviene llamar primero /api/personsync/execute.
     /// </summary>
+    [Authorize(Roles = RoleCodes.Admin)]
     [ApiController]
     [Route("api/[controller]")]
     public class PhotoSyncController : ControllerBase

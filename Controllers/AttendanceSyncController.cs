@@ -1,7 +1,9 @@
 using RampaSegura.Api.Common;
+using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Sync;
 using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,6 +17,7 @@ namespace RampaSegura.Api.Controllers
     /// Se debe llamar desde el despliegue LOCAL de la API (el que tiene acceso a la
     /// base local). El despliegue en la nube simplemente no llama este endpoint.
     /// </summary>
+    [Authorize(Roles = RoleCodes.Admin)]
     [ApiController]
     [Route("api/[controller]")]
     public class AttendanceSyncController : ControllerBase

@@ -1,12 +1,14 @@
 using RampaSegura.Api.Models;
 using RampaSegura.Api.Models.Requests;
 using RampaSegura.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace RampaSegura.Api.Controllers
 {
+    [Authorize(Roles = RoleCodes.Admin)]
     [ApiController]
     [Route("api/[controller]")]
     public class MineController : ControllerBase

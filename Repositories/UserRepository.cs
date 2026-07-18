@@ -47,7 +47,10 @@ namespace RampaSegura.Api.Repositories
                     PasswordHash = reader.GetString("password_hash"),
                     FullName = reader.GetString("full_name"),
                     Email = reader.GetString("email"),
-                    IsActive = reader.GetBoolean("is_active")
+                    IsActive = reader.GetBoolean("is_active"),
+                    RoleCode = reader.IsDBNull(reader.GetOrdinal("role_code"))
+                        ? RoleCodes.Viewer
+                        : reader.GetString("role_code")
                 };
             }
             catch (MySqlException ex)
