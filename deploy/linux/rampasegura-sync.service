@@ -1,0 +1,36 @@
+[Unit]
+Description=Rampa Segura - sincronizacion local a la nube
+Documentation=https://github.com/joseperez-dev-nic/MineLockAPI
+# Espera a que haya red antes de arrancar.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/rampasegura-sync.sh
+
+# Recarga la config sin reiniciar:  sudo systemctl reload rampasegura-sync
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Si el script muere por lo que sea, systemd lo levanta de nuevo.
+Restart=always
+RestartSec=10
+
+# Usuario sin privilegios. Crear con:
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin rampasegura
+User=rampasegura
+Group=rampasegura
+
+# El script solo necesita leer su config y salir a la red.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+# Los logs van al journal:  journalctl -u rampasegura-sync -f
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rampasegura-sync
+
+[Install]
+WantedBy=multi-user.target

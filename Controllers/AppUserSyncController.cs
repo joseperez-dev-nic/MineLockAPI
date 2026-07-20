@@ -11,8 +11,9 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Controllers
 {
     /// <summary>
-    /// Sincronización de app_user LOCAL -> NUBE, bajo demanda.
-    /// Envía todos los usuarios (upsert por user_id).
+    /// Sincronización de role + app_user LOCAL -> NUBE, bajo demanda.
+    /// Envía todos los roles y usuarios (upsert por role_id / user_id) en una sola
+    /// llamada. Los roles van primero: app_user.role_id los referencia.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -36,8 +37,9 @@ namespace RampaSegura.Api.Controllers
 
         /// <summary>
         /// POST /api/appusersync/execute
-        /// 1) Lee todos los usuarios de la base local.
-        /// 2) Los envía (upsert) a la nube.
+        /// 1) Lee los roles y los usuarios de la base local.
+        /// 2) Envía (upsert) primero los roles y después los usuarios: el orden
+        ///    importa porque app_user.role_id referencia role(role_id).
         /// 3) Registra el resultado en sync_log (local).
         /// </summary>
         [HttpPost("execute")]
@@ -45,28 +47,35 @@ namespace RampaSegura.Api.Controllers
         {
             try
             {
+                var roles = await _repository.GetRoleSourceLocalAsync(ct);
                 var usuarios = await _repository.GetSourceLocalAsync(ct);
 
-                if (usuarios.Count == 0)
+                if (roles.Count == 0 && usuarios.Count == 0)
                 {
                     return Ok(new SyncResult
                     {
                         Status = "SUCCESS",
                         RowsSent = 0,
-                        Message = "No hay usuarios para sincronizar."
+                        Message = "No hay roles ni usuarios para sincronizar."
                     });
                 }
 
+                // Roles primero: los usuarios los referencian por llave foránea.
+                await _repository.PushRolesToCloudAsync(roles, ct);
                 await _repository.PushToCloudAsync(usuarios, ct);
-                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, usuarios.Count, null, ct);
 
-                _logger.LogInformation("Sync app_user -> nube OK (endpoint), filas={Rows}", usuarios.Count);
+                var total = roles.Count + usuarios.Count;
+                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, total, null, ct);
+
+                _logger.LogInformation(
+                    "Sync role+app_user -> nube OK (endpoint), roles={Roles}, usuarios={Users}",
+                    roles.Count, usuarios.Count);
 
                 return Ok(new SyncResult
                 {
                     Status = "SUCCESS",
-                    RowsSent = usuarios.Count,
-                    Message = $"{usuarios.Count} usuario(s) sincronizado(s) a la nube."
+                    RowsSent = total,
+                    Message = $"{roles.Count} rol(es) y {usuarios.Count} usuario(s) sincronizado(s) a la nube."
                 });
             }
             catch (DataAccessException ex)

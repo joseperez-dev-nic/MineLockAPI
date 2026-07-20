@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Controllers
 {
     /// <summary>
-    /// Sincronización de la tabla person LOCAL -> NUBE, bajo demanda.
-    /// Se llama desde el despliegue LOCAL de la API. Envía el catálogo completo
-    /// de personas (upsert por person_id) porque person no tiene is_synced.
+    /// Sincronización de la tabla person LOCAL -> NUBE, bajo demanda (incremental).
+    /// Solo envía personas con is_synced = 0 (que sp_person_sync_from_ncheck marca
+    /// SOLO cuando cambia un dato real) y las marca is_synced = 1 tras subirlas.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -37,9 +37,10 @@ namespace RampaSegura.Api.Controllers
 
         /// <summary>
         /// POST /api/personsync/execute
-        /// 1) Lee todas las personas de la base local.
+        /// 1) Lee personas pendientes (is_synced = 0) de la base local.
         /// 2) Las envía (upsert) a la nube.
-        /// 3) Registra el resultado en sync_log (local).
+        /// 3) Marca is_synced = 1 en local solo de lo enviado.
+        /// 4) Registra el resultado en sync_log (local).
         /// Cualquier fallo se registra en la base de errores compartida y en sync_log,
         /// y se responde 503 con el detalle real.
         /// </summary>
@@ -48,7 +49,7 @@ namespace RampaSegura.Api.Controllers
         {
             try
             {
-                var personas = await _repository.GetSourceLocalAsync(ct);
+                var personas = await _repository.GetPendingLocalAsync(ct);
 
                 if (personas.Count == 0)
                 {
@@ -56,11 +57,12 @@ namespace RampaSegura.Api.Controllers
                     {
                         Status = "SUCCESS",
                         RowsSent = 0,
-                        Message = "No hay personas para sincronizar."
+                        Message = "No hay personas pendientes de sincronizar."
                     });
                 }
 
                 await _repository.PushToCloudAsync(personas, ct);
+                await _repository.MarkSyncedLocalAsync(personas, ct);
                 await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, personas.Count, null, ct);
 
                 _logger.LogInformation("Sync person -> nube OK (endpoint), filas={Rows}", personas.Count);

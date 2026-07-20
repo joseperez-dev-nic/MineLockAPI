@@ -11,6 +11,13 @@ namespace RampaSegura.Api.Models.Sync
         public long UserId { get; set; }
         public string Username { get; set; } = string.Empty;
         public string? EmployeeCode { get; set; }
+
+        /// <summary>
+        /// Referencia a role(role_id). Por eso los roles se sincronizan antes
+        /// que los usuarios, o el upsert falla por llave foránea.
+        /// </summary>
+        public int RoleId { get; set; }
+
         public string PasswordHash { get; set; } = string.Empty;
         public string? FullName { get; set; }
         public string? Email { get; set; }

@@ -1,9 +1,12 @@
+using System;
+
 namespace RampaSegura.Api.Models.Sync
 {
     /// <summary>
-    /// Fila de la tabla person tal cual vive en la base LOCAL, para sincronizar
-    /// a la nube. La tabla person NO tiene is_synced, así que el sync envía el
-    /// catálogo completo (upsert por person_id) en cada llamada.
+    /// Fila de la tabla person para sincronizar a la nube (incremental).
+    /// Solo se envían las que tienen is_synced = 0, que sp_person_sync_from_ncheck
+    /// marca SOLO cuando cambia algún dato real (no en cada toque).
+    /// updated_at se usa para proteger contra la condición de carrera al marcar.
     /// </summary>
     public class PersonSyncItem
     {
@@ -14,5 +17,6 @@ namespace RampaSegura.Api.Models.Sync
         public string? JobPosition { get; set; }
         public string? Department { get; set; }
         public bool IsActive { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }
