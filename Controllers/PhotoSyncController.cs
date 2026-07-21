@@ -15,6 +15,7 @@ namespace RampaSegura.Api.Controllers
     /// Solo envía fotos con is_synced = 0 y las marca is_synced = 1 tras subirlas.
     /// Como las fotos referencian a person, conviene llamar primero /api/personsync/execute.
     /// </summary>
+    [LocalOnly]
     [ApiController]
     [Route("api/[controller]")]
     public class PhotoSyncController : ControllerBase

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using MySqlConnector;
 using System;
 
@@ -10,18 +9,22 @@ namespace RampaSegura.Api.Data
     }
 
     /// <summary>
-    /// Registrar como Singleton en Program.cs. No abre la conexión, solo la construye;
-    /// cada repository es responsable de abrir/cerrar (using) su propia conexión,
-    /// igual que en tu patrón actual con SqlConnectionFactory.
+    /// Fábrica de la conexión OPERATIVA de esta instancia (la que usan todos los
+    /// endpoints de negocio). Recibe ya resuelta la cadena a usar: en el despliegue
+    /// Local será la base local; en el despliegue Cloud, la de la nube. Esa decisión
+    /// se toma en Program.cs según Deployment:Mode.
+    ///
+    /// No abre la conexión, solo la construye; cada repository abre/cierra (using)
+    /// la suya.
     /// </summary>
     public class RampaSeguraConnectionFactory : IRampaSeguraConnectionFactory
     {
         private readonly string _connectionString;
 
-        public RampaSeguraConnectionFactory(IConfiguration configuration)
+        public RampaSeguraConnectionFactory(string connectionString)
         {
-            _connectionString = configuration.GetConnectionString("RampaSegura")
-                ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'RampaSegura'.");
+            _connectionString = connectionString
+                ?? throw new ArgumentNullException(nameof(connectionString));
         }
 
         public MySqlConnection CreateConnection() => new MySqlConnection(_connectionString);

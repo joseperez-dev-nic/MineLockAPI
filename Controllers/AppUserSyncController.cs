@@ -15,6 +15,7 @@ namespace RampaSegura.Api.Controllers
     /// Envía todos los roles y usuarios (upsert por role_id / user_id) en una sola
     /// llamada. Los roles van primero: app_user.role_id los referencia.
     /// </summary>
+    [LocalOnly]
     [ApiController]
     [Route("api/[controller]")]
     public class AppUserSyncController : ControllerBase

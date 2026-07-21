@@ -16,6 +16,7 @@ namespace RampaSegura.Api.Controllers
     /// syncs, este NO escribe en sync_log (evita el "log del log"); los fallos solo van
     /// a la base de errores.
     /// </summary>
+    [LocalOnly]
     [ApiController]
     [Route("api/[controller]")]
     public class SyncLogSyncController : ControllerBase

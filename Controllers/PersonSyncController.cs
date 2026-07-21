@@ -15,6 +15,7 @@ namespace RampaSegura.Api.Controllers
     /// Solo envía personas con is_synced = 0 (que sp_person_sync_from_ncheck marca
     /// SOLO cuando cambia un dato real) y las marca is_synced = 1 tras subirlas.
     /// </summary>
+    [LocalOnly]
     [ApiController]
     [Route("api/[controller]")]
     public class PersonSyncController : ControllerBase

@@ -15,6 +15,7 @@ namespace RampaSegura.Api.Controllers
     /// Se debe llamar desde el despliegue LOCAL de la API (el que tiene acceso a la
     /// base local). El despliegue en la nube simplemente no llama este endpoint.
     /// </summary>
+    [LocalOnly]
     [ApiController]
     [Route("api/[controller]")]
     public class AttendanceSyncController : ControllerBase
@@ -37,11 +38,13 @@ namespace RampaSegura.Api.Controllers
 
         /// <summary>
         /// POST /api/attendancesync/execute
-        /// Ejecuta un ciclo completo:
-        ///   1) Lee marcajes pendientes (is_synced = 0) de la base local.
-        ///   2) Los envía (upsert) a la nube.
-        ///   3) Marca is_synced = 1 en local solo de lo enviado.
-        ///   4) Registra el resultado en sync_log (local).
+        /// Ciclo BIDIRECCIONAL:
+        ///   PULL (nube -> local): trae cambios hechos en la nube (p. ej. cierres
+        ///     manuales), los aplica en local y los marca sincronizados en la nube.
+        ///   PUSH (local -> nube): envía los marcajes/cambios de local a la nube.
+        /// El PULL va primero: si un cierre manual se hizo en la nube, entra a local
+        /// antes de que el push lo sobrescriba. Cada upsert pone is_synced=1 en el
+        /// destino, así no hay ping-pong.
         /// Cualquier fallo se registra en la base de errores compartida y en sync_log,
         /// y se responde 503 con el detalle real.
         /// </summary>
@@ -50,29 +53,37 @@ namespace RampaSegura.Api.Controllers
         {
             try
             {
-                var pending = await _repository.GetPendingLocalAsync(ct);
-
-                if (pending.Count == 0)
+                // --- PULL: nube -> local (cierres manuales hechos en la nube) ---
+                var fromCloud = await _repository.GetPendingCloudAsync(ct);
+                if (fromCloud.Count > 0)
                 {
-                    return Ok(new SyncResult
-                    {
-                        Status = "SUCCESS",
-                        RowsSent = 0,
-                        Message = "No hay marcajes pendientes de sincronizar."
-                    });
+                    await _repository.ApplyToLocalAsync(fromCloud, ct);
+                    await _repository.MarkSyncedCloudAsync(fromCloud, ct);
                 }
 
-                await _repository.PushToCloudAsync(pending, ct);
-                await _repository.MarkSyncedLocalAsync(pending, ct);
-                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, pending.Count, null, ct);
+                // --- PUSH: local -> nube (marcajes y cierres hechos en local) ---
+                var fromLocal = await _repository.GetPendingLocalAsync(ct);
+                if (fromLocal.Count > 0)
+                {
+                    await _repository.PushToCloudAsync(fromLocal, ct);
+                    await _repository.MarkSyncedLocalAsync(fromLocal, ct);
+                }
 
-                _logger.LogInformation("Sync attendance -> nube OK (endpoint), filas={Rows}", pending.Count);
+                var total = fromCloud.Count + fromLocal.Count;
+                if (total > 0)
+                {
+                    await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, total, null, ct);
+                    _logger.LogInformation("Sync attendance bidireccional OK, nube->local={Pull}, local->nube={Push}",
+                        fromCloud.Count, fromLocal.Count);
+                }
 
                 return Ok(new SyncResult
                 {
                     Status = "SUCCESS",
-                    RowsSent = pending.Count,
-                    Message = $"{pending.Count} marcaje(s) sincronizado(s) a la nube."
+                    RowsSent = total,
+                    Message = total == 0
+                        ? "No hay marcajes pendientes en ninguna dirección."
+                        : $"Sincronizados: {fromCloud.Count} de nube->local y {fromLocal.Count} de local->nube."
                 });
             }
             catch (DataAccessException ex)

@@ -10,6 +10,7 @@ namespace RampaSegura.Api.Models
     public class SessionReportItem
     {
         public long SessionId { get; set; }
+        public long PersonId { get; set; }
         public string EmployeeCode { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string? JobPosition { get; set; }

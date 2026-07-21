@@ -75,6 +75,34 @@ namespace RampaSegura.Api.Repositories
         }
 
         /// <summary>
+        /// sp_session_close_manual(p_person_id, p_exit_time_local, p_user_id, p_reason).
+        /// Cierre manual por un administrador: la hora de salida es LOCAL (escrita a mano)
+        /// y se registra quién lo cerró y por qué. Señaliza USER_NOT_FOUND, PERSON_NOT_FOUND,
+        /// NOT_INSIDE, EXIT_BEFORE_ENTRY o EXIT_IN_FUTURE si la coherencia falla.
+        /// Deja la sesión con is_synced = 0 para que el sync la reenvíe a la nube.
+        /// </summary>
+        public async Task CloseSessionManualAsync(long personId, DateTime exitTimeLocal, long userId, string reason)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_session_close_manual", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_person_id", personId);
+                cmd.Parameters.AddWithValue("p_exit_time_local", exitTimeLocal);
+                cmd.Parameters.AddWithValue("p_user_id", userId);
+                cmd.Parameters.AddWithValue("p_reason", reason);
+
+                await cnn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, $"{ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
         /// sp_dashboard_active() -- sin parámetros. Personal dentro de la mina ahora mismo.
         /// Las fotos NO viajan aquí: se sirven aparte como archivos por código de
         /// empleado (public/profile-photos), poblados vía GET /api/person/photos.
@@ -134,12 +162,25 @@ namespace RampaSegura.Api.Repositories
                 await cnn.OpenAsync();
                 using var reader = await cmd.ExecuteReaderAsync();
 
+                // person_id se lee solo si el SP lo devuelve, para no romper el
+                // reporte si aún no se actualizó sp_session_report.
+                var hasPersonId = false;
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    if (reader.GetName(i).Equals("person_id", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasPersonId = true;
+                        break;
+                    }
+                }
+
                 var result = new List<SessionReportItem>();
                 while (await reader.ReadAsync())
                 {
                     result.Add(new SessionReportItem
                     {
                         SessionId = reader.GetInt64("session_id"),
+                        PersonId = hasPersonId && !reader.IsDBNull(reader.GetOrdinal("person_id")) ? reader.GetInt64("person_id") : 0,
                         EmployeeCode = reader.GetString("employee_code"),
                         FullName = reader.GetString("full_name"),
                         JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),

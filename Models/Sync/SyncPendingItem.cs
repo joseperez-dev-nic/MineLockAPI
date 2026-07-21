@@ -31,6 +31,15 @@ namespace RampaSegura.Api.Models.Sync
         /// (MySQL prohíbe escribir columnas generadas); allá se recalcula sola.</summary>
         public TimeSpan? TimeInside { get; set; }
 
+        /// <summary>true si la sesión se cerró a mano (sp_session_close_manual).</summary>
+        public bool ClosedManually { get; set; }
+
+        /// <summary>Usuario que cerró la sesión manualmente (FK a app_user en la nube).</summary>
+        public long? ClosedByUserId { get; set; }
+
+        /// <summary>Motivo del cierre manual.</summary>
+        public string? ClosedReason { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

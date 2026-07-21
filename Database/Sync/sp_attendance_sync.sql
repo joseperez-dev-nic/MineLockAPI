@@ -31,6 +31,7 @@ BEGIN
     SELECT session_id, person_id, employee_code, full_name, job_position,
            department, level_id, entry_time, exit_time,
            time_zone, exit_time_zone, time_inside,
+           closed_manually, closed_by_user_id, closed_reason,
            created_at, updated_at
     FROM attendance_session
     WHERE is_synced = 0
@@ -59,36 +60,44 @@ CREATE PROCEDURE sp_attendance_sync_upsert(
     IN p_level_id       INT UNSIGNED,
     IN p_entry_time     DATETIME,
     IN p_exit_time      DATETIME,
-    IN p_time_zone      BIGINT,
-    IN p_exit_time_zone BIGINT,
-    IN p_created_at     DATETIME,
-    IN p_updated_at     DATETIME
+    IN p_time_zone         BIGINT,
+    IN p_exit_time_zone    BIGINT,
+    IN p_closed_manually   TINYINT,
+    IN p_closed_by_user_id BIGINT UNSIGNED,
+    IN p_closed_reason     VARCHAR(255),
+    IN p_created_at        DATETIME,
+    IN p_updated_at        DATETIME
 )
 BEGIN
     INSERT INTO attendance_session
         (session_id, person_id, employee_code, full_name, job_position,
          department, level_id, entry_time, exit_time,
-         time_zone, exit_time_zone, is_synced,
+         time_zone, exit_time_zone,
+         closed_manually, closed_by_user_id, closed_reason, is_synced,
          created_at, updated_at)
     VALUES
         (p_session_id, p_person_id, p_employee_code, p_full_name, p_job_position,
          p_department, p_level_id, p_entry_time, p_exit_time,
-         p_time_zone, p_exit_time_zone, 1,
+         p_time_zone, p_exit_time_zone,
+         p_closed_manually, p_closed_by_user_id, p_closed_reason, 1,
          p_created_at, p_updated_at)
     ON DUPLICATE KEY UPDATE
-        person_id      = VALUES(person_id),
-        employee_code  = VALUES(employee_code),
-        full_name      = VALUES(full_name),
-        job_position   = VALUES(job_position),
-        department     = VALUES(department),
-        level_id       = VALUES(level_id),
-        entry_time     = VALUES(entry_time),
-        exit_time      = VALUES(exit_time),
-        time_zone      = VALUES(time_zone),
-        exit_time_zone = VALUES(exit_time_zone),
-        is_synced      = 1,
-        created_at     = VALUES(created_at),
-        updated_at     = VALUES(updated_at);
+        person_id         = VALUES(person_id),
+        employee_code     = VALUES(employee_code),
+        full_name         = VALUES(full_name),
+        job_position      = VALUES(job_position),
+        department        = VALUES(department),
+        level_id          = VALUES(level_id),
+        entry_time        = VALUES(entry_time),
+        exit_time         = VALUES(exit_time),
+        time_zone         = VALUES(time_zone),
+        exit_time_zone    = VALUES(exit_time_zone),
+        closed_manually   = VALUES(closed_manually),
+        closed_by_user_id = VALUES(closed_by_user_id),
+        closed_reason     = VALUES(closed_reason),
+        is_synced         = 1,
+        created_at        = VALUES(created_at),
+        updated_at        = VALUES(updated_at);
 END //
 DELIMITER ;
 

@@ -34,6 +34,20 @@ namespace RampaSegura.Api.Controllers
             return Ok(new { status = "OK" });
         }
 
+        /// POST /api/attendance/exit-manual
+        /// Cierre manual de una sesión abierta, hecho por un administrador. La hora de
+        /// salida es LOCAL (escrita a mano) y se registra quién la cerró y el motivo.
+        [HttpPost("exit-manual")]
+        public async Task<ActionResult<object>> CloseSessionManual([FromBody] SessionCloseManualRequest request)
+        {
+            await _repository.CloseSessionManualAsync(
+                request.PersonId!.Value,
+                request.ExitTimeLocal!.Value,
+                request.UserId!.Value,
+                request.Reason!);
+            return Ok(new { status = "OK" });
+        }
+
         [HttpGet("dashboard")]
         public async Task<ActionResult<List<DashboardActiveItem>>> GetDashboard()
         {

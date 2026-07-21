@@ -14,6 +14,7 @@ namespace RampaSegura.Api.Controllers
     /// Consultas de monitoreo de la sincronización (solo lectura, no sincroniza nada).
     /// Se llama en el despliegue LOCAL, que es el que ve las dos bases.
     /// </summary>
+    [LocalOnly]
     [ApiController]
     [Route("api/[controller]")]
     public class SyncStatusController : ControllerBase

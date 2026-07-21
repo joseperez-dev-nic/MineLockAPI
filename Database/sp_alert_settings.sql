@@ -47,8 +47,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
 -- Semilla de la fila única con los valores por defecto (advertencia 7h, alerta 8h).
 -- Si ya existe, no la toca.
 -- ---------------------------------------------------------------------------
+-- updated_at en UTC para que la comparación del sync bidireccional sea válida
+-- entre servidores de distinta zona horaria.
 INSERT INTO alert_threshold_setting (setting_id, warn_limit_hours, turn_limit_hours, updated_by_user_id, updated_at)
-VALUES (1, 7.00, 8.00, NULL, NOW())
+VALUES (1, 7.00, 8.00, NULL, UTC_TIMESTAMP())
 ON DUPLICATE KEY UPDATE setting_id = setting_id;
 
 -- ===========================================================================
@@ -108,11 +110,15 @@ BEGIN
     FROM app_user
     WHERE user_id = p_user_id;
 
+    -- updated_at en UTC (UTC_TIMESTAMP): este valor se compara entre el servidor
+    -- local (UTC-6) y el de la nube (otra zona) en el sync bidireccional
+    -- "gana el más reciente". NOW() daría la hora LOCAL de cada servidor y la
+    -- comparacion seria injusta; UTC_TIMESTAMP() es el mismo instante en ambos.
     UPDATE alert_threshold_setting
        SET warn_limit_hours   = p_warn_limit_hours,
            turn_limit_hours   = p_turn_limit_hours,
            updated_by_user_id = p_user_id,
-           updated_at         = NOW()
+           updated_at         = UTC_TIMESTAMP()
      WHERE setting_id = 1;
 
     INSERT INTO audit_log (

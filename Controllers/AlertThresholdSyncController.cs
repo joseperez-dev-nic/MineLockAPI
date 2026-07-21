@@ -11,10 +11,13 @@ using System.Threading.Tasks;
 namespace RampaSegura.Api.Controllers
 {
     /// <summary>
-    /// Sincronización de alert_threshold_setting LOCAL -> NUBE, bajo demanda.
-    /// Envía todos los límites (upsert por setting_id). La nube los necesita porque
+    /// Sincronización de alert_threshold_setting LOCAL &lt;-&gt; NUBE (BIDIRECCIONAL).
+    /// Los umbrales se pueden editar desde cualquier lado; en cada llamada se lee de
+    /// las dos bases y se aplica el merge "gana el más nuevo" en ambas, así los dos
+    /// lados quedan con la versión más reciente. La nube los necesita porque
     /// sp_warning_report corre allá y los lee para calcular nivel_alerta.
     /// </summary>
+    [LocalOnly]
     [ApiController]
     [Route("api/[controller]")]
     public class AlertThresholdSyncController : ControllerBase
@@ -37,37 +40,39 @@ namespace RampaSegura.Api.Controllers
 
         /// <summary>
         /// POST /api/alertthresholdsync/execute
-        /// 1) Lee los límites de alerta de la base local.
-        /// 2) Los envía (upsert) a la nube.
-        /// 3) Registra el resultado en sync_log (local).
+        /// Sincronización BIDIRECCIONAL:
+        /// 1) Lee los límites de local y de la nube.
+        /// 2) Aplica "gana el más nuevo" en la nube (sube lo de local si es más nuevo).
+        /// 3) Aplica "gana el más nuevo" en local (baja lo de la nube si es más nuevo).
+        /// 4) Registra el resultado en sync_log (local).
+        /// El merge ignora lo más viejo, así que el orden no importa y no hay ping-pong.
         /// </summary>
         [HttpPost("execute")]
         public async Task<ActionResult<SyncResult>> Execute(CancellationToken ct)
         {
             try
             {
-                var limites = await _repository.GetSourceLocalAsync(ct);
+                // Se leen las DOS bases antes de tocar nada. Si la nube no responde,
+                // ReadCloudAsync lanza y no se modifica ninguna de las dos.
+                var localItems = await _repository.ReadLocalAsync(ct);
+                var cloudItems = await _repository.ReadCloudAsync(ct);
 
-                if (limites.Count == 0)
-                {
-                    return Ok(new SyncResult
-                    {
-                        Status = "SUCCESS",
-                        RowsSent = 0,
-                        Message = "No hay límites de alerta para sincronizar."
-                    });
-                }
+                // Cada merge solo pisa si lo que llega es más nuevo (por eso da igual
+                // el orden y es idempotente).
+                await _repository.MergeIntoCloudAsync(localItems, ct);  // local -> nube
+                await _repository.MergeIntoLocalAsync(cloudItems, ct);  // nube  -> local
 
-                await _repository.PushToCloudAsync(limites, ct);
-                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, limites.Count, null, ct);
+                var total = localItems.Count + cloudItems.Count;
+                await _repository.WriteSyncLogLocalAsync("SUCCESS", SyncType, total, null, ct);
 
-                _logger.LogInformation("Sync alert_threshold_setting -> nube OK (endpoint), filas={Rows}", limites.Count);
+                _logger.LogInformation("Sync alert_threshold_setting bidireccional OK (endpoint), local={Local}, nube={Cloud}",
+                    localItems.Count, cloudItems.Count);
 
                 return Ok(new SyncResult
                 {
                     Status = "SUCCESS",
-                    RowsSent = limites.Count,
-                    Message = $"{limites.Count} límite(s) de alerta sincronizado(s) a la nube."
+                    RowsSent = total,
+                    Message = $"Umbrales sincronizados en ambos sentidos (gana el más reciente)."
                 });
             }
             catch (DataAccessException ex)
