@@ -20,5 +20,17 @@ namespace RampaSegura.Api.Models
         public DateTime? ExitTime { get; set; }
         public TimeSpan? TimeInside { get; set; }
         public string? Status { get; set; }
+
+        /// <summary>true si la sesión se cerró manualmente (sp_session_close_manual).</summary>
+        public bool ClosedManually { get; set; }
+
+        /// <summary>Usuario que cerró la sesión manualmente (app_user.user_id).</summary>
+        public long? ClosedByUserId { get; set; }
+
+        /// <summary>Nombre del usuario que cerró manualmente (app_user.full_name).</summary>
+        public string? ClosedByName { get; set; }
+
+        /// <summary>Motivo del cierre manual.</summary>
+        public string? ClosedReason { get; set; }
     }
 }

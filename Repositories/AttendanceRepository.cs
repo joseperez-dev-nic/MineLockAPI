@@ -103,6 +103,98 @@ namespace RampaSegura.Api.Repositories
         }
 
         /// <summary>
+        /// sp_session_close_correct(p_session_id, p_new_exit_time_local, p_user_id, p_reason).
+        /// Corrige la hora de salida de una sesión YA cerrada y deja constancia en
+        /// attendance_session_edit_log. Señaliza USER_NOT_FOUND, SESSION_NOT_FOUND,
+        /// SESSION_STILL_OPEN, EXIT_BEFORE_ENTRY o EXIT_IN_FUTURE si la coherencia falla.
+        /// Deja is_synced = 0 para que el cambio se reenvíe a la nube.
+        /// </summary>
+        public async Task CorrectSessionExitAsync(long sessionId, DateTime newExitTimeLocal, long userId, string reason)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_session_close_correct", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_session_id", sessionId);
+                cmd.Parameters.AddWithValue("p_new_exit_time_local", newExitTimeLocal);
+                cmd.Parameters.AddWithValue("p_user_id", userId);
+                cmd.Parameters.AddWithValue("p_reason", reason);
+
+                await cnn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, $"{ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// sp_session_edit_history(p_session_id) -- historial de ediciones de una sesión,
+        /// del más reciente al más viejo. edited_by es el username de quien editó.
+        /// </summary>
+        public async Task<List<SessionEditLogItem>> GetSessionEditHistoryAsync(long sessionId)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_session_edit_history", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_session_id", sessionId);
+
+                await cnn.OpenAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                var result = new List<SessionEditLogItem>();
+                while (await reader.ReadAsync())
+                {
+                    result.Add(new SessionEditLogItem
+                    {
+                        EditId = reader.GetInt64("edit_id"),
+                        SessionId = reader.GetInt64("session_id"),
+                        EditedAt = reader.GetDateTime("edited_at"),
+                        EditedBy = reader.IsDBNull(reader.GetOrdinal("edited_by")) ? null : reader.GetString("edited_by"),
+                        FieldChanged = reader.GetString("field_changed"),
+                        OldValue = reader.IsDBNull(reader.GetOrdinal("old_value")) ? null : reader.GetString("old_value"),
+                        NewValue = reader.IsDBNull(reader.GetOrdinal("new_value")) ? null : reader.GetString("new_value"),
+                        Reason = reader.IsDBNull(reader.GetOrdinal("reason")) ? null : reader.GetString("reason")
+                    });
+                }
+                return result;
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al obtener el historial de ediciones de la sesión", ex);
+            }
+        }
+
+        /// <summary>
+        /// sp_session_edit_delete(p_edit_id, p_user_id) -- BORRADO LÓGICO de una entrada
+        /// del historial: marca is_deleted = 1 (no borra la fila) y registra quién/cuándo.
+        /// El flag se sincroniza, así el borrado se refleja en ambas bases sin resucitar.
+        /// Señaliza EDIT_NOT_FOUND o USER_NOT_FOUND si la coherencia falla.
+        /// </summary>
+        public async Task DeleteSessionEditAsync(long editId, long userId)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_session_edit_delete", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_edit_id", editId);
+                cmd.Parameters.AddWithValue("p_user_id", userId);
+
+                await cnn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, $"{ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
         /// sp_dashboard_active() -- sin parámetros. Personal dentro de la mina ahora mismo.
         /// Las fotos NO viajan aquí: se sirven aparte como archivos por código de
         /// empleado (public/profile-photos), poblados vía GET /api/person/photos.
@@ -162,17 +254,11 @@ namespace RampaSegura.Api.Repositories
                 await cnn.OpenAsync();
                 using var reader = await cmd.ExecuteReaderAsync();
 
-                // person_id se lee solo si el SP lo devuelve, para no romper el
-                // reporte si aún no se actualizó sp_session_report.
-                var hasPersonId = false;
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    if (reader.GetName(i).Equals("person_id", System.StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasPersonId = true;
-                        break;
-                    }
-                }
+                // Columnas presentes: permite leer las nuevas (person_id, closed_*)
+                // solo si el SP ya se actualizó, sin romper si va un paso atrás.
+                var cols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < reader.FieldCount; i++) cols.Add(reader.GetName(i));
+                bool Has(string c) => cols.Contains(c) && !reader.IsDBNull(reader.GetOrdinal(c));
 
                 var result = new List<SessionReportItem>();
                 while (await reader.ReadAsync())
@@ -180,16 +266,20 @@ namespace RampaSegura.Api.Repositories
                     result.Add(new SessionReportItem
                     {
                         SessionId = reader.GetInt64("session_id"),
-                        PersonId = hasPersonId && !reader.IsDBNull(reader.GetOrdinal("person_id")) ? reader.GetInt64("person_id") : 0,
+                        PersonId = Has("person_id") ? reader.GetInt64("person_id") : 0,
                         EmployeeCode = reader.GetString("employee_code"),
                         FullName = reader.GetString("full_name"),
-                        JobPosition = reader.IsDBNull(reader.GetOrdinal("job_position")) ? null : reader.GetString("job_position"),
-                        Department = reader.IsDBNull(reader.GetOrdinal("department")) ? null : reader.GetString("department"),
-                        LevelName = reader.IsDBNull(reader.GetOrdinal("level_name")) ? null : reader.GetString("level_name"),
+                        JobPosition = Has("job_position") ? reader.GetString("job_position") : null,
+                        Department = Has("department") ? reader.GetString("department") : null,
+                        LevelName = Has("level_name") ? reader.GetString("level_name") : null,
                         EntryTime = reader.GetDateTime("entry_time"),
-                        ExitTime = reader.IsDBNull(reader.GetOrdinal("exit_time")) ? null : reader.GetDateTime("exit_time"),
-                        TimeInside = reader.IsDBNull(reader.GetOrdinal("time_inside")) ? null : reader.GetTimeSpan("time_inside"),
-                        Status = reader.GetString("status")
+                        ExitTime = Has("exit_time") ? reader.GetDateTime("exit_time") : (DateTime?)null,
+                        TimeInside = Has("time_inside") ? reader.GetTimeSpan("time_inside") : (TimeSpan?)null,
+                        Status = reader.GetString("status"),
+                        ClosedManually = Has("closed_manually") && reader.GetBoolean("closed_manually"),
+                        ClosedByUserId = Has("closed_by_user_id") ? reader.GetInt64("closed_by_user_id") : (long?)null,
+                        ClosedByName = Has("closed_by_name") ? reader.GetString("closed_by_name") : null,
+                        ClosedReason = Has("closed_reason") ? reader.GetString("closed_reason") : null
                     });
                 }
                 return result;

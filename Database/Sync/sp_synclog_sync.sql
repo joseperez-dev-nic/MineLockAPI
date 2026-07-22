@@ -1,12 +1,13 @@
 -- =====================================================================
--- Sincronización de BITÁCORAS (sync_log + audit_log) : LOCAL -> NUBE
+-- Sincronización de BITÁCORAS : LOCAL -> NUBE
+--   sync_log + audit_log + attendance_session_edit_log
 -- =====================================================================
 -- Ejecuta [LOCAL] en la base local y [NUBE] en la nube (o ambos en las dos,
 -- como respaldo). CREAR SIN 'DEFINER' para evitar el error 1449.
 --
--- Ninguna de las dos tablas tiene is_synced, por eso se hace upsert de todas
--- las filas (por sync_id / audit_id) en cada llamada al endpoint
--- POST /api/synclogsync/execute, que sincroniza AMBAS tablas.
+-- Ninguna tiene is_synced, por eso se hace upsert de todas las filas
+-- (por sync_id / audit_id / edit_id) en cada llamada al endpoint
+-- POST /api/synclogsync/execute, que sincroniza LAS TRES tablas.
 -- Este sync NO escribe en sync_log (evita el "log del log").
 --
 -- IMPORTANTE: tras (re)crear un procedimiento, reinicia la API.
@@ -105,5 +106,63 @@ BEGIN
         new_values          = VALUES(new_values),
         client_ip           = VALUES(client_ip),
         changed_at          = VALUES(changed_at);
+END //
+DELIMITER ;
+
+-- ---------------------------------------------------------------------
+-- [LOCAL] Todas las filas de attendance_session_edit_log en local.
+-- ---------------------------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_editlog_sync_source;
+DELIMITER //
+CREATE PROCEDURE sp_editlog_sync_source()
+BEGIN
+    SELECT edit_id, session_id, edited_by_user_id, edited_at,
+           field_changed, old_value, new_value, reason,
+           is_deleted, deleted_by_user_id, deleted_at
+    FROM attendance_session_edit_log
+    ORDER BY edit_id;
+END //
+DELIMITER ;
+
+-- ---------------------------------------------------------------------
+-- [NUBE] Upsert de una fila de attendance_session_edit_log (mismo edit_id, PK).
+-- OJO FK: session_id -> attendance_session, edited_by_user_id -> app_user.
+-- Ambos deben existir en la nube antes (los sincroniza attendance y appuser).
+-- ---------------------------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_editlog_sync_upsert;
+DELIMITER //
+CREATE PROCEDURE sp_editlog_sync_upsert(
+    IN p_edit_id            BIGINT UNSIGNED,
+    IN p_session_id         BIGINT UNSIGNED,
+    IN p_edited_by_user_id  BIGINT UNSIGNED,
+    IN p_edited_at          DATETIME,
+    IN p_field_changed      VARCHAR(30),
+    IN p_old_value          VARCHAR(60),
+    IN p_new_value          VARCHAR(60),
+    IN p_reason             VARCHAR(255),
+    IN p_is_deleted         TINYINT,
+    IN p_deleted_by_user_id BIGINT UNSIGNED,
+    IN p_deleted_at         DATETIME
+)
+BEGIN
+    INSERT INTO attendance_session_edit_log
+        (edit_id, session_id, edited_by_user_id, edited_at,
+         field_changed, old_value, new_value, reason,
+         is_deleted, deleted_by_user_id, deleted_at)
+    VALUES
+        (p_edit_id, p_session_id, p_edited_by_user_id, p_edited_at,
+         p_field_changed, p_old_value, p_new_value, p_reason,
+         p_is_deleted, p_deleted_by_user_id, p_deleted_at)
+    ON DUPLICATE KEY UPDATE
+        session_id         = VALUES(session_id),
+        edited_by_user_id  = VALUES(edited_by_user_id),
+        edited_at          = VALUES(edited_at),
+        field_changed      = VALUES(field_changed),
+        old_value          = VALUES(old_value),
+        new_value          = VALUES(new_value),
+        reason             = VALUES(reason),
+        is_deleted         = VALUES(is_deleted),
+        deleted_by_user_id = VALUES(deleted_by_user_id),
+        deleted_at         = VALUES(deleted_at);
 END //
 DELIMITER ;

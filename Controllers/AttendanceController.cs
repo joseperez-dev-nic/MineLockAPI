@@ -48,6 +48,41 @@ namespace RampaSegura.Api.Controllers
             return Ok(new { status = "OK" });
         }
 
+        /// POST /api/attendance/exit-correct
+        /// Corrige la hora de salida de una sesión YA cerrada. Deja constancia en el
+        /// historial de ediciones (attendance_session_edit_log).
+        [HttpPost("exit-correct")]
+        public async Task<ActionResult<object>> CorrectSessionExit([FromBody] SessionCloseCorrectRequest request)
+        {
+            await _repository.CorrectSessionExitAsync(
+                request.SessionId!.Value,
+                request.NewExitTimeLocal!.Value,
+                request.UserId!.Value,
+                request.Reason!);
+            return Ok(new { status = "OK" });
+        }
+
+        /// GET /api/attendance/edit-history/{sessionId}
+        /// Historial de ediciones de una sesión, del más reciente al más viejo.
+        [HttpGet("edit-history/{sessionId:long}")]
+        public async Task<ActionResult<List<SessionEditLogItem>>> GetEditHistory(long sessionId)
+        {
+            var data = await _repository.GetSessionEditHistoryAsync(sessionId);
+            return Ok(data);
+        }
+
+        /// DELETE /api/attendance/edit/{editId}?userId=1
+        /// Borrado LÓGICO de una entrada del historial: la marca como eliminada (no la
+        /// borra) y registra quién lo hizo. El flag se sincroniza a la otra base.
+        [HttpDelete("edit/{editId:long}")]
+        public async Task<ActionResult<object>> DeleteEdit(
+            long editId,
+            [FromQuery, Required(ErrorMessage = "USER_ID_REQUIRED")] long? userId)
+        {
+            await _repository.DeleteSessionEditAsync(editId, userId!.Value);
+            return Ok(new { status = "OK" });
+        }
+
         [HttpGet("dashboard")]
         public async Task<ActionResult<List<DashboardActiveItem>>> GetDashboard()
         {

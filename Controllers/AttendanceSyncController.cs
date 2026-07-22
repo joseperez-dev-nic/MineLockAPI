@@ -53,7 +53,7 @@ namespace RampaSegura.Api.Controllers
         {
             try
             {
-                // --- PULL: nube -> local (cierres manuales hechos en la nube) ---
+                // --- PULL: nube -> local (cierres/correcciones hechos en la nube) ---
                 var fromCloud = await _repository.GetPendingCloudAsync(ct);
                 if (fromCloud.Count > 0)
                 {

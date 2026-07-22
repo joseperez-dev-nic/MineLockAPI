@@ -186,5 +186,111 @@ namespace RampaSegura.Api.Repositories
                 throw new DataAccessException((int)ex.Number, "Error al enviar audit_log a la nube", ex);
             }
         }
+
+        // --- attendance_session_edit_log: BIDIRECCIONAL ---------------------
+        // Las correcciones pueden hacerse en local o en la nube. Gracias al
+        // auto_increment_offset (local impares / nube pares) los edit_id nunca
+        // chocan, así que basta upsert por edit_id en las dos direcciones: cada
+        // base termina con la unión de todas las ediciones.
+
+        /// <summary>Lee edit_log de LOCAL.</summary>
+        public Task<List<AttendanceEditLogSyncItem>> GetEditLogLocalAsync(CancellationToken ct = default) =>
+            ReadEditLogAsync(_local.CreateConnection, "local", ct);
+
+        /// <summary>Lee edit_log de la NUBE.</summary>
+        public Task<List<AttendanceEditLogSyncItem>> GetEditLogCloudAsync(CancellationToken ct = default) =>
+            ReadEditLogAsync(_cloud.CreateConnection, "la nube", ct);
+
+        /// <summary>Upsert de edit_log en la NUBE (push local -> nube).</summary>
+        public Task PushEditLogToCloudAsync(IReadOnlyList<AttendanceEditLogSyncItem> items, CancellationToken ct = default) =>
+            UpsertEditLogAsync(_cloud.CreateConnection, "la nube", items, ct);
+
+        /// <summary>Upsert de edit_log en LOCAL (pull nube -> local).</summary>
+        public Task ApplyEditLogToLocalAsync(IReadOnlyList<AttendanceEditLogSyncItem> items, CancellationToken ct = default) =>
+            UpsertEditLogAsync(_local.CreateConnection, "local", items, ct);
+
+        /// <summary>sp_editlog_sync_source() en la base indicada.</summary>
+        private static async Task<List<AttendanceEditLogSyncItem>> ReadEditLogAsync(Func<MySqlConnection> connFactory, string origen, CancellationToken ct)
+        {
+            try
+            {
+                using var cnn = connFactory();
+                using var cmd = new MySqlCommand("sp_editlog_sync_source", cnn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                await cnn.OpenAsync(ct);
+                using var reader = await cmd.ExecuteReaderAsync(ct);
+
+                var result = new List<AttendanceEditLogSyncItem>();
+                while (await reader.ReadAsync(ct))
+                {
+                    result.Add(new AttendanceEditLogSyncItem
+                    {
+                        EditId = reader.GetInt64("edit_id"),
+                        SessionId = reader.GetInt64("session_id"),
+                        EditedByUserId = reader.GetInt64("edited_by_user_id"),
+                        EditedAt = reader.GetDateTime("edited_at"),
+                        FieldChanged = reader.GetString("field_changed"),
+                        OldValue = reader.IsDBNull(reader.GetOrdinal("old_value")) ? null : reader.GetString("old_value"),
+                        NewValue = reader.IsDBNull(reader.GetOrdinal("new_value")) ? null : reader.GetString("new_value"),
+                        Reason = reader.IsDBNull(reader.GetOrdinal("reason")) ? null : reader.GetString("reason"),
+                        IsDeleted = !reader.IsDBNull(reader.GetOrdinal("is_deleted")) && reader.GetBoolean("is_deleted"),
+                        DeletedByUserId = reader.IsDBNull(reader.GetOrdinal("deleted_by_user_id")) ? null : reader.GetInt64("deleted_by_user_id"),
+                        DeletedAt = reader.IsDBNull(reader.GetOrdinal("deleted_at")) ? null : reader.GetDateTime("deleted_at")
+                    });
+                }
+                return result;
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, $"Error al leer attendance_session_edit_log en {origen}", ex);
+            }
+        }
+
+        /// <summary>
+        /// sp_editlog_sync_upsert(...) por cada fila, en transacción.
+        /// OJO FK: edit_log referencia attendance_session y app_user; ambos deben
+        /// existir en el destino antes. Si falla por FK, se reintenta el próximo ciclo.
+        /// </summary>
+        private static async Task UpsertEditLogAsync(Func<MySqlConnection> connFactory, string destino, IReadOnlyList<AttendanceEditLogSyncItem> items, CancellationToken ct)
+        {
+            if (items.Count == 0) return;
+
+            try
+            {
+                using var cnn = connFactory();
+                await cnn.OpenAsync(ct);
+                using var tx = await cnn.BeginTransactionAsync(ct);
+
+                foreach (var item in items)
+                {
+                    using var cmd = new MySqlCommand("sp_editlog_sync_upsert", cnn, tx)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
+                    cmd.Parameters.AddWithValue("p_edit_id", item.EditId);
+                    cmd.Parameters.AddWithValue("p_session_id", item.SessionId);
+                    cmd.Parameters.AddWithValue("p_edited_by_user_id", item.EditedByUserId);
+                    cmd.Parameters.AddWithValue("p_edited_at", item.EditedAt);
+                    cmd.Parameters.AddWithValue("p_field_changed", item.FieldChanged);
+                    cmd.Parameters.AddWithValue("p_old_value", (object?)item.OldValue ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_new_value", (object?)item.NewValue ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_reason", (object?)item.Reason ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_is_deleted", item.IsDeleted ? 1 : 0);
+                    cmd.Parameters.AddWithValue("p_deleted_by_user_id", (object?)item.DeletedByUserId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("p_deleted_at", (object?)item.DeletedAt ?? DBNull.Value);
+
+                    await cmd.ExecuteNonQueryAsync(ct);
+                }
+
+                await tx.CommitAsync(ct);
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, $"Error al enviar attendance_session_edit_log a {destino}", ex);
+            }
+        }
     }
 }
