@@ -4,7 +4,6 @@ using RampaSegura.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,9 +18,6 @@ namespace RampaSegura.Api.Controllers
     [Route("api/[controller]")]
     public class SyncStatusController : ControllerBase
     {
-        private const int LimitePorDefecto = 50;
-        private const int LimiteMaximo = 500;
-
         private readonly SyncStatusRepository _repository;
         private readonly ILogger<SyncStatusController> _logger;
 
@@ -64,31 +60,6 @@ namespace RampaSegura.Api.Controllers
             }
 
             return Ok(resultado);
-        }
-
-        /// <summary>
-        /// GET /api/syncstatus/history?syncType=ATTENDANCE&amp;fechaDesde=2026-07-01&amp;fechaHasta=2026-07-20&amp;limit=50
-        /// Historial de sincronizaciones (sync_log), del más reciente al más viejo.
-        /// Todos los filtros son opcionales.
-        /// </summary>
-        [HttpGet("history")]
-        public async Task<ActionResult<List<SyncLogSyncItem>>> GetHistory(
-            [FromQuery] string? syncType,
-            [FromQuery] DateOnly? fechaDesde,
-            [FromQuery] DateOnly? fechaHasta,
-            [FromQuery] int? limit,
-            CancellationToken ct)
-        {
-            if (fechaDesde.HasValue && fechaHasta.HasValue && fechaHasta.Value < fechaDesde.Value)
-            {
-                return BadRequest(new { error = "RANGO_FECHAS_INVALIDO" });
-            }
-
-            // Se acota el limite para que nadie pida el historial completo por error.
-            var tope = Math.Clamp(limit ?? LimitePorDefecto, 1, LimiteMaximo);
-
-            var data = await _repository.GetHistoryLocalAsync(syncType, fechaDesde, fechaHasta, tope, ct);
-            return Ok(data);
         }
     }
 }

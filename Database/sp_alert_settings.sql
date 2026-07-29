@@ -170,7 +170,7 @@ BEGIN
            client_ip,
            changed_at
     FROM audit_log
-    WHERE (p_change_type IS NULL OR change_type = p_change_type)
+    WHERE (p_change_type IS NULL OR change_type COLLATE utf8mb4_0900_ai_ci = p_change_type COLLATE utf8mb4_0900_ai_ci)
     ORDER BY changed_at DESC, audit_id DESC
     LIMIT p_limit;
 END$$

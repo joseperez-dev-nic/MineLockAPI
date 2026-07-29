@@ -5,7 +5,11 @@
 --
 -- sp_attendance_sync_status  -> [LOCAL + NUBE] (se consulta en las dos para
 --                               poder compararlas, asi que crealo en ambas)
--- sp_sync_history            -> [LOCAL]        (sync_log vive en local)
+-- sp_sync_history            -> [LOCAL + NUBE] (GET /api/syncstatus/history corre
+--                               contra la base OPERATIVA de cada despliegue; como
+--                               sync_log se replica local->nube, hace falta el SP
+--                               en las dos bases para que el endpoint responda
+--                               igual sin importar el modo)
 --
 -- IMPORTANTE: tras (re)crear un procedimiento, reinicia la API.
 -- =====================================================================
@@ -48,7 +52,7 @@ BEGIN
     SELECT sync_id, started_at, finished_at, status, sync_type,
            rows_sent, error_message, created_at
     FROM sync_log
-    WHERE (p_sync_type   IS NULL OR sync_type = p_sync_type)
+    WHERE (p_sync_type   IS NULL OR sync_type COLLATE utf8mb4_0900_ai_ci = p_sync_type COLLATE utf8mb4_0900_ai_ci)
       AND (p_fecha_desde IS NULL OR started_at >= p_fecha_desde)
       AND (p_fecha_hasta IS NULL OR started_at <  DATE_ADD(p_fecha_hasta, INTERVAL 1 DAY))
     ORDER BY sync_id DESC

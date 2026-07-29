@@ -62,6 +62,7 @@ builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<PersonRepository>();
 builder.Services.AddScoped<MineRepository>();
 builder.Services.AddScoped<AlertSettingRepository>();
+builder.Services.AddScoped<SyncHistoryRepository>();
 
 // --- Módulo de SINCRONIZACIÓN: SOLO en el despliegue Local ---
 // Necesita ver las dos bases (local origen + nube destino) y el ncheck_db local,
