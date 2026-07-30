@@ -28,7 +28,8 @@ namespace RampaSegura.Api.Security
 
         public async Task InvokeAsync(HttpContext context, IConfiguration configuration, ErrorLogRepository errorLogRepository)
         {
-            if (context.Request.Path.StartsWithSegments("/swagger"))
+            if (context.Request.Path.StartsWithSegments("/swagger")
+                || context.Request.Path.StartsWithSegments("/api/person/photo"))
             {
                 await _next(context);
                 return;

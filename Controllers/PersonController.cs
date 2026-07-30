@@ -51,5 +51,46 @@ namespace RampaSegura.Api.Controllers
             var data = await _repository.GetAllProfilePhotosAsync();
             return Ok(data);
         }
+
+        /// GET /api/person/photo/{employeeCode}
+        [HttpGet("photo/{employeeCode}")]
+        public async Task<IActionResult> GetPhoto(string employeeCode)
+        {
+            var (photoData, mimeType) = await _repository.GetPhotoByCodeAsync(employeeCode);
+            if (photoData == null) return NotFound();
+            return File(photoData, mimeType ?? "image/jpeg");
+        }
+
+        /// POST /api/person/sync-photos
+        [HttpPost("sync-photos")]
+        public async Task<ActionResult<object>> SyncPhotosFromNcheck()
+        {
+            var rowsAffected = await _repository.SyncPhotosFromNcheckAsync();
+            return Ok(new { status = "OK", rowsAffected });
+        }
+
+        /// GET /api/person/photo-sync-interval
+        [HttpGet("photo-sync-interval")]
+        public async Task<ActionResult<object>> GetPhotoSyncInterval()
+        {
+            var minutes = await _repository.GetPhotoSyncIntervalAsync();
+            return Ok(new { intervalMinutes = minutes });
+        }
+
+        /// PUT /api/person/photo-sync-interval
+        [HttpPut("photo-sync-interval")]
+        public async Task<ActionResult<object>> SetPhotoSyncInterval([FromBody] PhotoSyncIntervalRequest request)
+        {
+            if (request.IntervalMinutes < 1 || request.IntervalMinutes > 1440)
+                return BadRequest(new { error = "El intervalo debe ser entre 1 y 1440 minutos." });
+
+            await _repository.SetPhotoSyncIntervalAsync(request.IntervalMinutes);
+            return Ok(new { status = "OK", intervalMinutes = request.IntervalMinutes });
+        }
+    }
+
+    public class PhotoSyncIntervalRequest
+    {
+        public int IntervalMinutes { get; set; }
     }
 }

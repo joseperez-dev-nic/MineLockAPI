@@ -128,6 +128,33 @@ namespace RampaSegura.Api.Repositories
             }
         }
 
+        public async Task<(byte[]? PhotoData, string? MimeType)> GetPhotoByCodeAsync(string employeeCode)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_person_photo_by_code", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("p_employee_code", employeeCode);
+
+                await cnn.OpenAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                if (!await reader.ReadAsync()) return (null, null);
+
+                var photoOrdinal = reader.GetOrdinal("photo_data");
+                if (reader.IsDBNull(photoOrdinal)) return (null, null);
+
+                var photoData = (byte[])reader.GetValue(photoOrdinal);
+                var mimeType = reader.IsDBNull(reader.GetOrdinal("mime_type")) ? "image/jpeg" : reader.GetString("mime_type");
+                return (photoData, mimeType);
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al obtener la foto de perfil", ex);
+            }
+        }
+
         /// <summary>
         /// sp_person_sync_all_from_ncheck() -- sin parámetros. INSERT ... ON DUPLICATE KEY UPDATE
         /// de ncheck_db.person hacia la tabla local `person`. No devuelve result set,
@@ -147,6 +174,62 @@ namespace RampaSegura.Api.Repositories
             catch (MySqlException ex)
             {
                 throw new DataAccessException((int)ex.Number, "Error al sincronizar el personal desde NCHECK", ex);
+            }
+        }
+
+        public async Task<int> SyncPhotosFromNcheckAsync()
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand("sp_sync_person_photos", cnn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                await cnn.OpenAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                    return reader.GetInt32("rows_affected");
+                return 0;
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al sincronizar las fotos desde NCHECK", ex);
+            }
+        }
+
+        public async Task<int> GetPhotoSyncIntervalAsync()
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand(
+                    "SELECT INTERVAL_VALUE FROM information_schema.EVENTS " +
+                    "WHERE EVENT_SCHEMA = DATABASE() AND EVENT_NAME = 'ev_sync_person_photos'", cnn);
+
+                await cnn.OpenAsync();
+                var result = await cmd.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 5;
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al leer el intervalo de sincronización de fotos", ex);
+            }
+        }
+
+        public async Task SetPhotoSyncIntervalAsync(int minutes)
+        {
+            try
+            {
+                using var cnn = _factory.CreateConnection();
+                using var cmd = new MySqlCommand(
+                    $"ALTER EVENT ev_sync_person_photos ON SCHEDULE EVERY {minutes} MINUTE", cnn);
+
+                await cnn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (MySqlException ex)
+            {
+                throw new DataAccessException((int)ex.Number, "Error al actualizar el intervalo de sincronización de fotos", ex);
             }
         }
     }
