@@ -203,8 +203,7 @@ namespace RampaSegura.Api.Repositories
             {
                 using var cnn = _factory.CreateConnection();
                 using var cmd = new MySqlCommand(
-                    "SELECT INTERVAL_VALUE FROM information_schema.EVENTS " +
-                    "WHERE EVENT_SCHEMA = DATABASE() AND EVENT_NAME = 'ev_sync_person_photos'", cnn);
+                    "SELECT interval_minutes FROM photo_sync_config WHERE id = 1", cnn);
 
                 await cnn.OpenAsync();
                 var result = await cmd.ExecuteScalarAsync();
@@ -222,7 +221,8 @@ namespace RampaSegura.Api.Repositories
             {
                 using var cnn = _factory.CreateConnection();
                 using var cmd = new MySqlCommand(
-                    $"ALTER EVENT ev_sync_person_photos ON SCHEDULE EVERY {minutes} MINUTE", cnn);
+                    "UPDATE photo_sync_config SET interval_minutes = @min WHERE id = 1", cnn);
+                cmd.Parameters.AddWithValue("@min", minutes);
 
                 await cnn.OpenAsync();
                 await cmd.ExecuteNonQueryAsync();
